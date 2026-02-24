@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ziekenhuis Zevenaar — Portaal v6</title>
+<style>
+  :root{
+    --bg:#eef5fb; --bg-grad:linear-gradient(135deg,#e6f0ff 0%,#f7fbff 40%,#fff 100%);
+    --ink:#0a3d62; --ink-2:#1e90ff; --card:#fff; --card-glass:rgba(255,255,255,.68);
+    --ok:#2ecc71; --warn:#ffb84d; --danger:#e74c3c;
+    --shadow:0 10px 30px rgba(0,0,0,.15);
+    --radius:16px; --ink-text:#1e2a35; --muted:#667788; --pill:#f0f6ff; --pill-b:#dde4ea;
+    --menu-w:300px;
+
+    /* Triage kleuren */
+    --tri-red:#e53935; --tri-red-f:#fff0f0; --tri-red-b:#ffc2c2;
+    --tri-orange:#f39c12; --tri-orange-f:#fff6e6; --tri-orange-b:#ffe1b3;
+    --tri-yellow:#f1c40f; --tri-yellow-f:#fffbe6; --tri-yellow-b:#ffe987;
+    --tri-green:#2ecc71; --tri-green-f:#eafff3; --tri-green-b:#b8f5d0;
+    --tri-blue:#1e90ff; --tri-blue-f:#e6f3ff; --tri-blue-b:#b6d9ff;
+  }
+  [data-theme="dark"]{
+    --bg:#0f1722; --bg-grad:linear-gradient(135deg,#0b1320 0%,#0f1722 40%,#0b1018 100%);
+    --ink:#0f5fa8; --ink-2:#2f9bff; --card:#121a26; --card-glass:rgba(18,26,38,.66);
+    --ok:#23a85d; --warn:#d99a3a; --danger:#cf2a2a;
+    --ink-text:#e6eef7; --muted:#aab3bd; --pill:#0d2235; --pill-b:#1e3a55;
+    --shadow:0 18px 40px rgba(0,0,0,.45);
+
+    --tri-red:#ff8f8c; --tri-red-f:#3b1f1f; --tri-red-b:#6b2d2d;
+    --tri-orange:#ffb34d; --tri-orange-f:#3b2d18; --tri-orange-b:#6b4a22;
+    --tri-yellow:#ffdb4d; --tri-yellow-f:#3b3718; --tri-yellow-b:#6b5e22;
+    --tri-green:#3bd98c; --tri-green-f:#133322; --tri-green-b:#21523a;
+    --tri-blue:#44a9ff; --tri-blue-f:#0d2436; --tri-blue-b:#1e3a55;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:Inter,Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg-grad); color:var(--ink-text); }
+
+  /* Topbar */
+  .topbar{ position:fixed; top:0; left:0; right:0; height:60px; background:var(--card-glass); backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:space-between; padding:0 16px; box-shadow:var(--shadow); z-index:1000; border-bottom:1px solid rgba(0,0,0,.06) }
+  .topbar .left{ display:flex; gap:10px; align-items:center }
+  .topbar .right{ display:flex; gap:8px; align-items:center }
+  .pill-sm{ padding:8px 12px; background:var(--pill); border:1px solid var(--pill-b); border-radius:999px; font-size:12px; display:inline-flex; gap:8px; align-items:center; cursor:pointer }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; }
+  .brand svg{ width:28px; height:28px }
+
+  /* Zijmenu */
+  .menu{ width:var(--menu-w); height:calc(100vh - 60px); background:var(--ink); color:#fff; position:fixed; top:60px; left:0; padding:18px; overflow:auto; box-shadow:var(--shadow); display:none; }
+  body.logged-in .menu{ display:block; }
+  .menu h2{ text-align:left; margin:6px 0 12px; font-size:18px; opacity:.9 }
+  .menu .group{ margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.25); }
+  .menu .group:first-child{ border-top:none; padding-top:0 }
+  .menu button{ width:100%; padding:12px 14px; margin-top:8px; background:var(--ink-2); border:none; color:#fff; font-weight:700; cursor:pointer; border-radius:10px; display:flex; align-items:center; gap:10px; }
+  .menu button:hover{ background:#4da6ff }
+  [data-theme="dark"] .menu button:hover{ background:#44a9ff }
+  .menu .icon{ width:22px; text-align:center; flex:0 0 22px }
+
+  /* Content */
+  .content{ margin-left:20px; padding:84px 28px 40px; max-width:1280px; transition: margin-left .25s ease; }
+  body.logged-in .content{ margin-left:calc(var(--menu-w) + 20px); }
+
+  /* Cards/inputs */
+  .card{ background:var(--card-glass); backdrop-filter:blur(10px); padding:22px; margin:16px 0; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid rgba(0,0,0,.06) }
+  .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center }
+  .col{ flex:1 1 240px }
+  input, select, textarea{ width:100%; padding:12px; border-radius:10px; border:1px solid #cfd6dd; background:#fff; }
+  [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea{ background:#0b1320; color:var(--ink-text); border-color:#223246; }
+  textarea{ min-height:90px; resize:vertical }
+  label{ display:block; font-size:13px; color:#334; margin:8px 0 6px }
+  [data-theme="dark"] label{ color:#c7d1dc }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
+  button.action{ padding:10px 14px; background:var(--ink); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:700 }
+  button.action:hover{ background:var(--ink-2) }
+  .danger{ background:var(--danger) !important } .danger:hover{ filter:brightness(1.05) }
+  .stat{ font-size:28px; font-weight:800 }
+  .list-empty{ color:var(--muted); font-style:italic }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid #cfd6dd; background:#f7fbff; font-size:12px }
+
+  /* Status tags */
+  .tag{ display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+  .tag.wait{ background:#e6f2ff; color:#0a3d62; border:1px solid #b6d6ff }
+  .tag.pickup{ background:#e3f7e3; color:#0b5c0b; border:1px solid #bce8bc }
+  .tag.busy{ background:#fff1b6; color:#6a5400; border:1px solid #ffdd66 }
+  .tag.done{ background:#e4ffe4; color:#155d15; border:1px solid #b2f0b2 }
+
+  /* Rolkleuren */
+  .role-badge{ border-radius:999px; padding:4px 10px; font-weight:700; color:#fff; display:inline-block; font-size:12px }
+  .r-balie{ background:#2b7cff }
+  .r-balie.hoofd-tint{ background:#1e63d6 }
+  .r-verpleegkundige{ background:#00b894 }
+  .r-verpleegkundige.hoofd-tint{ background:#00a383 }
+  .r-chirurg{ background:#e17055 }
+  .r-chirurg.hoofd-tint{ background:#c95a3f }
+  .r-arts{ background:#6c5ce7 }
+  .r-arts.hoofd-tint{ background:#5849d2 }
+  .r-dokter{ background:#fdcb6e; color:#333 }
+  .r-dokter.hoofd-tint{ background:#f4b544; color:#333 }
+  .r-apotheek{ background:#00cec9 }
+  .r-apotheek.hoofd-tint{ background:#00b3ae }
+  .r-management{ background:#1e90ff }
+
+  /* Topbar naam + status + drukte */
+  #userNameBadge{ display:none; }
+  #topStatus{ display:none; align-items:center; gap:6px; }
+  #topStatus .status-select{ padding:6px 8px; border-radius:10px; border:1px solid #cfd6dd; background:#fff; font-size:12px; }
+  #topStatus .note-btn{ padding:6px 10px; border-radius:10px; border:1px solid #cfd6dd; background:#f7fbff; cursor:pointer; font-size:12px; }
+  [data-theme="dark"] #topStatus .status-select{ background:#0b1320; color:var(--ink-text); border-color:#223246; }
+  [data-theme="dark"] #topStatus .note-btn{ background:#0d2235; border-color:#1e3a55; }
+  #drukte{ display:inline-flex; align-items:center; gap:6px; }
+  .hide-when-logged-out{ display:none; }
+  body.logged-in .hide-when-logged-out{ display:inline-flex; }
+
+  /* Landing page */
+  .hero{ min-height:calc(100vh - 60px); display:flex; align-items:center; justify-content:center; padding:30px 20px; }
+  .hero .wrap{ max-width:1100px; width:100%; display:grid; grid-template-columns: 1.2fr .8fr; gap:22px; align-items:center; }
+  .hero .title{ font-size:46px; line-height:1.1; margin:0; color:var(--ink); }
+  .hero .subtitle{ color:var(--muted); font-size:18px; margin:12px 0 18px }
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap }
+  .cta{ padding:14px 18px; border-radius:12px; font-weight:800; border:none; cursor:pointer; box-shadow:var(--shadow); }
+  .cta.primary{ background:linear-gradient(135deg,#1e90ff,#0a6dd9); color:#fff }
+  .cta.ghost{ background:#fff; color:#0a3d62; border:1px solid #dbe6f5 }
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; }
+  .tile{ background:var(--card-glass); backdrop-filter:blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:16px; padding:18px; box-shadow:var(--shadow) }
+  .tile h3{ margin:8px 0 6px }
+  .tile .muted{ color:var(--muted); font-size:13px }
+  .logo{ width:70px; height:70px; border-radius:18px; display:inline-flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#1e90ff,#6bc1ff); color:#fff; font-weight:900; box-shadow:var(--shadow) }
+
+  /* Triage pill */
+  .tri{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px; border:1px solid; }
+  .tri.red{ background:var(--tri-red-f); border-color:var(--tri-red-b); color:var(--tri-red); }
+  .tri.orange{ background:var(--tri-orange-f); border-color:var(--tri-orange-b); color:var(--tri-orange); }
+  .tri.yellow{ background:var(--tri-yellow-f); border-color:var(--tri-yellow-b); color:var(--tri-yellow); }
+  .tri.green{ background:var(--tri-green-f); border-color:var(--tri-green-b); color:var(--tri-green); }
+  .tri.blue{ background:var(--tri-blue-f); border-color:var(--tri-blue-b); color:var(--tri-blue); }
+
+  /* Kamers styling */
+  .rooms-wrap{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
+  .room{ padding:12px; border-radius:12px; border:1px solid #d7e0ea; cursor:pointer; user-select:none; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); background:#fff; }
+  .room .name{ font-weight:800; }
+  .room.available{ background:#f0fff4; border-color:#bfeecf; color:#145a32 }
+  .room.occupied{ background:#fff4f4; border-color:#f2c4c4; color:#6e1f1f }
+  [data-theme="dark"] .room{ background:#0b1320; border-color:#223246; }
+  [data-theme="dark"] .room.available{ background:#0f2a1d; border-color:#1f5a39; color:#b7f3d2 }
+  [data-theme="dark"] .room.occupied{ background:#2a1212; border-color:#5a1f1f; color:#ffb9b9 }
+
+  /* Notify close button */
+  .notify-card{ position:relative; }
+  .notify-close{ position:absolute; top:6px; right:10px; background:transparent; border:none; font-size:20px; cursor:pointer; color:#445; }
+  [data-theme="dark"] .notify-close{ color:#ccd5e0 }
+
+  @media (max-width:980px){ .hero .wrap{ grid-template-columns:1fr; text-align:center } }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="left brand">
+    <!-- Inline SVG logo -->
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#1e90ff"/><stop offset="100%" stop-color="#6bc1ff"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/><path d="M20 33h24M32 21v24" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>
+    <span>Ziekenhuis Zevenaar</span>
+    <span class="pill-sm" id="drukte">🔵 Drukte: <strong id="drukteText">—</strong></span>
+  </div>
+  <div class="right">
+    <button class="pill-sm" id="darkToggle" title="Schakel donker/licht">🌙 Donker</button>
+    <span class="pill-sm" id="roleBadge">Rol: —</span>
+    <span class="pill-sm" id="userNameBadge">—</span>
+    <span id="topStatus">
+      <select id="topStatusSelect" class="status-select"></select>
+      <button id="topStatusNoteBtn" class="note-btn" title="Notitie aanpassen">📝 Notitie</button>
+    </span>
+    <button class="pill-sm hide-when-logged-out" id="btnChangeMyPw" title="Eigen wachtwoord wijzigen">🔒 Wachtwoord</button>
+    <button class="pill-sm hide-when-logged-out" id="btnLogout">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- Zijmenu (alleen na login) -->
+<div class="menu">
+  <div class="group">
+    <h2>Werk</h2>
+    <button onclick="showPage('database')"><span class="icon">📋</span><span class="label">Patiënten Database</span></button>
+    <button onclick="showPage('oproep')"><span class="icon">🔔</span><span class="label">Oproepsysteem</span></button>
+    <button onclick="showPage('dokter')"><span class="icon">🩺</span><span class="label">Doktersportaal</span></button>
+    <button onclick="showPage('apotheek')"><span class="icon">💊</span><span class="label">Apotheek</span></button>
+    <button onclick="showPage('behandelingen')"><span class="icon">📚</span><span class="label">Behandelingen DB</span></button>
+  </div>
+  <div class="group">
+    <h2>Team</h2>
+    <button onclick="showPage('dokters')"><span class="icon">👨‍⚕️</span><span class="label">Dokters (beschikbaarheid)</span></button>
+    <button onclick="showPage('kamers')"><span class="icon">🚪</span><span class="label">Kamerbeheer</span></button>
+    <button onclick="showPage('coord')"><span class="icon">🧭</span><span class="label">Teamcoördinatie</span></button>
+  </div>
+  <div class="group">
+    <h2>Management</h2>
+    <button onclick="showPage('management')"><span class="icon">🛠️</span><span class="label">Management</span></button>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- LANDING -->
+  <section id="landing">
+    <div class="hero">
+      <div class="wrap">
+        <div>
+          <div class="logo">ZZ</div>
+          <h1 class="title">Welkom bij het <span style="color:#1e90ff">Ziekenhuis Zevenaar</span> Portaal</h1>
+          <p class="subtitle">Veilige en snelle workflow voor balie, verpleegkundigen, artsen, dokters en management. Log in om te starten of bekijk onze afdelingen en solliciteer.</p>
+          <div class="cta-row">
+            <button class="cta primary" onclick="goLogin()">Inloggen</button>
+            <button class="cta ghost" onclick="goSollicitaties()">Afdelingen & Sollicitaties</button>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><h3>🔒 Veilig</h3><div class="muted">Per‑roepnummer wachtwoorden en rollen, audit‑log & export.</div></div>
+          <div class="tile"><h3>🩺 Doktersportaal</h3><div class="muted">Claimen, behandelen, voorschrijven en afronden.</div></div>
+          <div class="tile"><h3>🏥 Triage (kleur)</h3><div class="muted">🔴 Rood, 🟠 Oranje, 🟡 Geel, 🟢 Groen, 🔵 Blauw met prioriteit.</div></div>
+          <div class="tile"><h3>📚 Behandelingen</h3><div class="muted">Volledige database met uitgevoerde behandelingen.</div></div>
+          <div class="tile"><h3>💊 Apotheek</h3><div class="muted">Aangeschreven, klaar, gehaald – alles inzichtelijk.</div></div>
+          <div class="tile"><h3>👥 Team</h3><div class="muted">Beschikbaarheid, kamers en toewijzingen per persoon.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN PAGE -->
+  <section id="loginPage" style="display:none">
+    <div class="login-host">
+      <div class="login-card">
+        <div class="login-logo">ZZ</div>
+        <h2 class="login-title">Inloggen</h2>
+        <div class="login-sub">Log in met je <strong>roepnummer</strong> en <strong>wachtwoord</strong>.</div>
+        <div class="login-grid">
+          <div>
+            <label>Roepnummer (ZZ‑01 t/m ZZ‑99)</label>
+            <input id="lp_roep" placeholder="Bijv. ZZ-16" autocomplete="off"/>
+          </div>
+          <div>
+            <label>Wachtwoord</label>
+            <input id="lp_pw" type="password" placeholder="Wachtwoord" autocomplete="current-password"/>
+          </div>
+          <div id="lp_err" style="color:#e33; min-height:18px"></div>
+          <div class="actions">
+            <button class="action" onclick="attemptLogin()">Inloggen</button>
+            <button class="action" style="background:#7c8996" onclick="clearLogin()">Wissen</button>
+            <button class="action" style="background:#95a5b0" onclick="goLanding()">⬅ Terug</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLLICITATIES (publiek) -->
+  <section id="sollicitatiesPage" style="display:none">
+    <h2>Afdelingen & Sollicitaties</h2>
+    <div id="deptList"></div>
+    <div class="actions">
+      <button class="action" onclick="goLanding()">⬅ Terug naar start</button>
+      <button class="action" onclick="goLogin()">🔑 Inloggen</button>
+    </div>
+  </section>
+
+  <!-- DATABASE -->
+  <section id="database" style="display:none">
+    <h2>Patiënten Database</h2>
+
+    <div class="card">
+      <h3>Nieuwe patiënt toevoegen</h3>
+      <div class="row">
+        <div class="col"><label>Naam*</label><input id="f_naam" placeholder="Bijv. Jan Jansen" /></div>
+        <div class="col"><label>ID* (mag dubbel)</label><input id="f_id" placeholder="Bijv. 2026-0001" /></div>
+        <div class="col"><label>Medisch rapport</label>
+          <select id="f_rapport"><option>Ja</option><option>Nee</option></select>
+        </div>
+        <div class="col"><label>Triage*</label>
+          <select id="f_triage">
+            <option value="1">🔴 Rood – Kritiek (T1)</option>
+            <option value="2" selected>🟠 Oranje – Hoog (T2)</option>
+            <option value="3">🟡 Geel – Middel (T3)</option>
+            <option value="4">🟢 Groen – Laag (T4)</option>
+            <option value="5">🔵 Blauw – Niet-urgent (T5)</option>
+          </select>
+        </div>
+        <div class="col"><label>Status</label>
+          <select id="f_status">
+            <option>Wachtkamer</option>
+            <option>Wordt opgehaald</option>
+            <option>Bezig</option>
+            <option>Afgehandeld</option>
+          </select>
+        </div>
+      </div>
+      <label>Allergieën (komma-gescheiden)</label>
+      <input id="f_allergie" placeholder="bijv. penicilline, noten"/>
+      <label>Reden van afspraak</label>
+      <textarea id="f_reden" placeholder="Klacht of reden voor komst..."></textarea>
+      <label>Afspraak (optioneel)</label>
+      <input id="f_afspraak" type="datetime-local" />
+      <div class="actions">
+        <button class="action" onclick="registreer()">Registreren</button>
+        <button class="action" onclick="clearForm()">Velden leegmaken</button>
+        <button class="action" onclick="seedDemo()">Vul demo‑data</button>
+      </div>
+      <div id="valMsg" class="list-empty" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="col"><input id="zoek" placeholder="Zoek op naam, ID of reden..." /></div>
+        <div class="col">
+          <select id="filter_status">
+            <option value="">Alle statussen</option>
+            <option>Wachtkamer</option><option>Wordt opgehaald</option><option>Bezig</option><option>Afgehandeld</option><option>Ingepland</option>
+          </select>
+        </div>
+        <div class="col">
+          <select id="filter_triage">
+            <option value="">Alle triages</option>
+            <option value="1">🔴 Rood (T1)</option>
+            <option value="2">🟠 Oranje (T2)</option>
+            <option value="3">🟡 Geel (T3)</option>
+            <option value="4">🟢 Groen (T4)</option>
+            <option value="5">🔵 Blauw (T5)</option>
+          </select>
+        </div>
+        <div class="col">
+          <button class="action" onclick="zoekPatient()">Zoek</button>
+          <button class="action" onclick="resetZoek()">Reset filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="patientLijst"></div>
+  </section>
+
+  <!-- OPROEPSYSTEEM -->
+  <section id="oproep" style="display:none">
+    <h2>Oproepsysteem</h2>
+    <div class="row">
+      <div class="card stat">Wachtenden: <span id="aantal">0</span></div>
+      <div class="card stat">Laatst opgeroepen: <span id="laatste">-</span></div>
+      <div class="card stat">Gem. wachttijd: <span id="wachttijd">0</span> sec</div>
+    </div>
+    <div class="card">
+      <p class="pill">Flow: <strong>Volgende</strong> → <strong>Wordt opgehaald</strong> → dokter <em>claimt</em> → <strong>Bezig</strong>.</p>
+      <div class="actions" style="margin-top:12px">
+        <button class="action" style="font-size:18px;padding:14px 18px" onclick="volgende()">Volgende patiënt oproepen</button>
+        <button class="action" onclick="toonWachtlijst()">Toon huidige wachtlijst</button>
+        <button class="action" onclick="toggleAutoCall()"><span id="autoCallTxt">Auto‑oproep: Uit</span></button>
+        <button class="action danger" onclick="resetAvgWait()">Reset wachttijd‑meting</button>
+      </div>
+      <div id="wachtlijst"></div>
+    </div>
+  </section>
+
+  <!-- DOKTERSPORTAAL -->
+  <section id="dokter" style="display:none">
+    <h2>Doktersportaal</h2>
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <span class="pill">Ingelogd: <strong id="dokNaam">—</strong></span>
+        </div>
+        <div class="col">
+          <select id="dokFilter" onchange="updateDokter()">
+            <option value="alle">Toon: Alle (actieve) patiënten</option>
+            <option value="mijn">Toon: Alleen aan mij toegewezen</option>
+          </select>
+        </div>
+      </div>
+      <p style="margin-top:6px">
+        <em>Haal op (claim)</em> → <strong>Bezig</strong>. Voor <em>Afgehandeld</em> is <strong>behandeling</strong> verplicht.
+        Recepten voorschrijven: (hoofd)Dokter/Arts/Chirurg &amp; Management.
+      </p>
+    </div>
+    <div id="dokterLijst"></div>
+  </section>
+
+  <!-- BEHANDELINGEN DB -->
+  <section id="behandelingen" style="display:none">
+    <h2>Behandelingen Database</h2>
+    <div class="card">
+      <div class="row">
+        <div class="col"><input id="b_zoek" placeholder="Zoek op naam, ID of dokter..."/></div>
+        <div class="col"><button class="action" onclick="renderBehandelingen()">Zoek</button></div>
+      </div>
+    </div>
+    <div id="behandelingenLijst"></div>
+  </section>
+
+  <!-- DOKTERS (BESCHIKBAARHEID) -->
+  <section id="dokters" style="display:none">
+    <h2>Dokters – Beschikbaarheid</h2>
+    <div id="myDocCard" class="card" style="display:none">
+      <h3>Mijn beschikbaarheid</h3>
+      <div class="row">
+        <div class="col">
+          <label>Status</label>
+          <select id="myDocStatus"></select>
+        </div>
+        <div class="col">
+          <label>Notitie (optioneel)</label>
+          <input id="myDocNote" placeholder="Bijv. op OK, terug 14:30" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action" onclick="saveMyDoctorAvailability()">Opslaan</button>
+      </div>
+      <div class="list-empty" id="myDocSaved" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Overzicht – alle dokters</h3>
+      <div id="doctorList"></div>
+    </div>
+  </section>
+
+  <!-- APOTHEEK -->
+  <section id="apotheek" style="display:none">
+    <h2>Apotheek</h2>
+    <div class="card">
+      <div class="row">
+        <div class="col"><input id="zoekRecept" placeholder="Zoek op naam, ID of medicijn..." /></div>
+        <div class="col">
+          <select id="filterReceptStatus">
+            <option value="">Alle receptstatussen</option>
+            <option>Aangeschreven</option><option>Klaar</option><option>Gehaald</option>
+          </select>
+        </div>
+        <div class="col">
+          <button class="action" onclick="zoekRecept()">Zoek</button>
+          <button class="action" onclick="resetReceptZoek()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div id="receptLijst"></div>
+
+    <div class="card">
+      <h3>Afgehaald</h3>
+      <div id="collectedList"></div>
+    </div>
+  </section>
+
+  <!-- KAMERBEHEER -->
+  <section id="kamers" style="display:none">
+    <h2>Kamerbeheer</h2>
+    <div class="row">
+      <div class="card"><strong>Vrije kamers</strong>: <span id="countVrij">0</span></div>
+      <div class="card"><strong>Bezet</strong>: <span id="countBezet">0</span></div>
+    </div>
+    <div class="card"><h3>1e Verdieping</h3><div id="rooms1" class="rooms-wrap"></div></div>
+    <div class="card"><h3>2e Verdieping</h3><div id="rooms2" class="rooms-wrap"></div></div>
+    <div class="list-empty">Tip: klik op een kamer om <strong>Bezet/Beschikbaar</strong> te wisselen.</div>
+  </section>
+
+  <!-- TEAMCOÖRDINATIE -->
+  <section id="coord" style="display:none">
+    <h2>Teamcoördinatie</h2>
+
+    <div class="card">
+      <h3>Mensen & kamers</h3>
+      <div class="row">
+        <div class="col">
+          <label>Persoon (roepnummer)</label>
+          <select id="coordPerson"></select>
+        </div>
+        <div class="col">
+          <label>Kies kamer/plek</label>
+          <select id="coordRoom"></select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action" onclick="assignRoomToPerson()">Wijs kamer/plek toe</button>
+        <button class="action" onclick="clearRoomFromPerson()">Verwijder toewijzing</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Patiënten toewijzen aan mensen</h3>
+      <div class="row">
+        <div class="col">
+          <label>Patiënt</label>
+          <select id="coordPatient"></select>
+        </div>
+        <div class="col">
+          <label>Toewijzen aan (roepnummer)</label>
+          <select id="coordAssignTo"></select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action" onclick="assignPatientToPerson()">Toewijzen</button>
+        <button class="action" onclick="markAssignedPickedUp()">Markeer opgehaald (→ Bezig)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Huidige toewijzingen</h3>
+      <div id="coordAssignments"></div>
+    </div>
+
+    <div class="card">
+      <h3>Teamstatus (online)</h3>
+      <div id="coordTeamStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3>Sollicitaties (alleen hoofdrollen)</h3>
+      <div id="coordApplications"></div>
+    </div>
+  </section>
+
+  <!-- MANAGEMENT -->
+  <section id="management" style="display:none">
+    <h2>Management</h2>
+    <div class="card">
+      <div class="actions">
+        <button class="action" onclick="exportDataJSON()">Exporteer data (JSON)</button>
+        <button class="action" onclick="exportCSVPatients()">Exporteer patiënten (CSV)</button>
+        <button class="action" onclick="exportCSVRecepten()">Exporteer recepten (CSV)</button>
+        <button class="action" onclick="exportCSVRooms()">Exporteer kamers (CSV)</button>
+        <button class="action" onclick="exportCSVDoctorAvailability()">Exporteer dokters (CSV)</button>
+        <button class="action" onclick="exportCSVAudit()">Exporteer audit‑log (CSV)</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importDataJSON(this.files[0])"/>
+        <button class="action" onclick="document.getElementById('importFile').click()">Importeer data (JSON)</button>
+        <button class="action" onclick="viewAudit()">Bekijk audit‑log</button>
+        <button class="action danger" onclick="resetAll()">Reset alle data</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button class="action" onclick="showMgmtPanel('stats')">Statistieken (vandaag)</button>
+        <button class="action" onclick="showMgmtPanel('active')">Ingelogd recent</button>
+        <button class="action" onclick="showMgmtPanel('eveningRoles')">Avondrollen</button>
+        <button class="action" onclick="showMgmtPanel('permRoles')">Permanente rollen</button>
+        <button class="action" onclick="showMgmtPanel('names')">Namen beheren</button>
+        <button class="action" onclick="showMgmtPanel('availability')">Online & beschikbaar</button>
+        <button class="action" onclick="showMgmtPanel('passwords')">Wachtwoorden</button>
+      </div>
+    </div>
+
+    <div id="mgmtDynamic"></div>
+    <div id="auditPanel" class="card" style="display:none"></div>
+  </section>
+
+</div>
+
+<script>
+/* ===========================
+   THEME & TOPBAR
+=========================== */
+const THEME_KEY = "zzh_theme";
+function setTheme(t){ document.documentElement.setAttribute("data-theme", t); localStorage.setItem(THEME_KEY, t); }
+function getTheme(){ return localStorage.getItem(THEME_KEY) || "light"; }
+document.getElementById("darkToggle").onclick = ()=>{ const cur=getTheme(); const next=cur==="light"?"dark":"light"; setTheme(next); document.getElementById("darkToggle").textContent = next==="dark" ? "☀️ Licht" : "🌙 Donker"; };
+setTheme(getTheme()); document.getElementById("darkToggle").textContent = getTheme()==="dark" ? "☀️ Licht" : "🌙 Donker";
+
+/* ===========================
+   NAVIGATIE (Landing/Login/Sollicitaties)
+=========================== */
+function hideAllPublic(){ ["landing","loginPage","sollicitatiesPage"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; }); }
+function goLanding(){ hideAllPrivate(); hideAllPublic(); document.getElementById('landing').style.display='block'; document.body.classList.remove('logged-in'); updateTopBarAuth(false); }
+function goLogin(){ hideAllPrivate(); hideAllPublic(); document.getElementById('loginPage').style.display='block'; document.body.classList.remove('logged-in'); updateTopBarAuth(false); setTimeout(()=> document.getElementById('lp_roep').focus(), 0); }
+function goSollicitaties(){ hideAllPrivate(); hideAllPublic(); document.getElementById('sollicitatiesPage').style.display='block'; document.body.classList.remove('logged-in'); updateTopBarAuth(false); }
+function hideAllPrivate(){ ["database","oproep","dokter","behandelingen","dokters","apotheek","kamers","coord","management"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; }); }
+
+/* ===========================
+   LOGIN / ROLLEN / NAMEN / WACHTWOORDEN
+=========================== */
+const PASSWORD_GENERAL = "ZZ3194";        // default
+const PASSWORD_DOCTOR  = "ZZdokter9254";  // fallback: geeft dokter-rol
+const PASSWORD_MGMT    = "ZZmanagement67249"; // fallback: geeft management
+const RESERVED_PRIV = new Set(["ZZ-01","ZZ-02","ZZ-03","ZZ-04","ZZ-05","ZZ-06","ZZ-07","ZZ-08"]);
+
+const ALL_ROLES = [
+  "Balie","Verpleegkundige","Chirurg","Arts","Dokter","Apotheek",
+  "Hoofd Balie","Hoofd Verpleegkundige","Hoofd Chirurg","Hoofd Arts","Hoofd Dokter","Hoofd Apotheek",
+  "Management"
+];
+function roleBaseKey(role){ const r=(role||"").toLowerCase(); if(r.includes("balie")) return "balie"; if(r.includes("verpleeg")) return "verpleegkundige"; if(r.includes("chirurg")) return "chirurg"; if(r.includes("arts")) return "arts"; if(r.includes("dokter")) return "dokter"; if(r.includes("apotheek")) return "apotheek"; if(r==="management") return "management"; return "balie"; }
+function roleClass(role){ const base=roleBaseKey(role); const isHoofd=(role||"").toLowerCase().startsWith("hoofd"); return `role-badge r-${base}${isHoofd?' hoofd-tint':''}`; }
+function roleAccentHex(role){ const base=roleBaseKey(role); const map={ balie:"#2b7cff", verpleegkundige:"#00b894", chirurg:"#e17055", arts:"#6c5ce7", dokter:"#fdcb6e", apotheek:"#00cec9", management:"#1e90ff" }; const dark={ balie:"#1e63d6", verpleegkundige:"#00a383", chirurg:"#c95a3f", arts:"#5849d2", dokter:"#f4b544", apotheek:"#00b3ae", management:"#1e90ff" }; const isHoofd=(role||"").toLowerCase().startsWith("hoofd"); return isHoofd ? (dark[base]||"#1e90ff") : (map[base]||"#1e90ff"); }
+function isDoctorLike(role){ const r=(role||"").toLowerCase(); return ["chirurg","arts","dokter"].some(k=> r===k || r.endsWith(" "+k)) || r==="management"; }
+function canPrescribe(role){ const r=(role||"").toLowerCase(); return r==="management" || r.includes("chirurg") || r.includes("arts") || r.includes("hoofd dokter") || r==="dokter"; }
+
+let rolesByRoep = JSON.parse(localStorage.getItem("zz_roles_v2") || "{}");
+let namesByRoep = JSON.parse(localStorage.getItem("zz_names_v1") || "{}");
+let eveningRoles = JSON.parse(localStorage.getItem("zz_evening_roles_v1") || "{}");
+let activeUsers  = JSON.parse(localStorage.getItem("zz_active_users_v1") || "{}");
+let passwordsByRoep = JSON.parse(localStorage.getItem("zz_pw_v1") || "{}");
+
+function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function ensureEveningToday(){ if(!eveningRoles.date || eveningRoles.date !== todayKey()){ eveningRoles = { date: todayKey(), map: {} }; localStorage.setItem("zz_evening_roles_v1", JSON.stringify(eveningRoles)); } }
+ensureEveningToday();
+function saveRolesLocal(){ localStorage.setItem("zz_roles_v2", JSON.stringify(rolesByRoep)); }
+function saveNamesLocal(){ localStorage.setItem("zz_names_v1", JSON.stringify(namesByRoep)); }
+function saveEveningLocal(){ localStorage.setItem("zz_evening_roles_v1", JSON.stringify(eveningRoles)); }
+function saveActiveUsers(){ localStorage.setItem("zz_active_users_v1", JSON.stringify(activeUsers)); }
+function savePasswords(){ localStorage.setItem("zz_pw_v1", JSON.stringify(passwordsByRoep)); }
+
+/* Defaults */
+if(!rolesByRoep["ZZ-02"]) rolesByRoep["ZZ-02"]="Balie";
+if(!rolesByRoep["ZZ-03"]) rolesByRoep["ZZ-03"]="Verpleegkundige";
+if(!rolesByRoep["ZZ-04"]) rolesByRoep["ZZ-04"]="Chirurg";
+if(!rolesByRoep["ZZ-05"]) rolesByRoep["ZZ-05"]="Apotheek";
+saveRolesLocal();
+
+let currentUser = { roepnummer: sessionStorage.getItem("user_roep") || "", role: sessionStorage.getItem("user_role") || "" };
+function displayName(rn){ const nm=namesByRoep[rn]; return nm? `${nm} (${rn})` : rn; }
+function setRoleBadgeText(role, rn){ const el=document.getElementById("roleBadge"); el.className=roleClass(role); el.textContent = `Rol: ${role} — ${displayName(rn)}`; }
+function updateTopUserBadge(){ const el=document.getElementById("userNameBadge"); if(currentUser.roepnummer){ el.style.display="inline-flex"; el.textContent=displayName(currentUser.roepnummer); } else{ el.style.display="none"; el.textContent="—"; } }
+function updateTopBarAuth(isLogged){ document.getElementById('btnChangeMyPw').style.display = isLogged? 'inline-flex':'none'; document.getElementById('btnLogout').style.display = isLogged? 'inline-flex':'none'; }
+
+/* Active users heartbeat */
+setInterval(()=>{ if(!currentUser.roepnummer) return; const rn=currentUser.roepnummer; activeUsers[rn]=activeUsers[rn]||{}; activeUsers[rn].role=currentUser.role; activeUsers[rn].name=namesByRoep[rn]||""; activeUsers[rn].lastSeen=Date.now(); saveActiveUsers(); }, 60000);
+
+/* Inloggen */
+function clearLogin(){ document.getElementById('lp_roep').value=''; document.getElementById('lp_pw').value=''; document.getElementById('lp_err').textContent=''; }
+function attemptLogin(){ const rn=(document.getElementById('lp_roep').value||'').toUpperCase().trim(); const pw=(document.getElementById('lp_pw').value||''); if(!/^ZZ\-(0[1-9]|[1-9][0-9])$/.test(rn)){ document.getElementById('lp_err').textContent='Roepnummer ongeldig. Gebruik bijvoorbeeld ZZ-01 of ZZ-16.'; return; }
+  ensureEveningToday();
+  let sessieRol=null; const perPw=passwordsByRoep[rn];
+  // Striktere beveiliging ZZ-01..ZZ-08: alleen eigen wachtwoord of management
+  if(RESERVED_PRIV.has(rn)){
+    if(pw===PASSWORD_MGMT){ sessieRol='Management'; }
+    else if(perPw && pw===perPw){ sessieRol = eveningRoles.map[rn] || rolesByRoep[rn] || 'Balie'; }
+    else { document.getElementById('lp_err').textContent='Dit roepnummer vereist eigen wachtwoord of management‑wachtwoord.'; return; }
+  } else {
+    if(perPw && pw===perPw){ sessieRol = eveningRoles.map[rn] || rolesByRoep[rn] || 'Balie'; }
+    else if(pw===PASSWORD_MGMT){ sessieRol='Management'; }
+    else if(pw===PASSWORD_DOCTOR){ sessieRol='Chirurg'; }
+    else if(pw===PASSWORD_GENERAL){ sessieRol = eveningRoles.map[rn] || rolesByRoep[rn] || 'Balie'; }
+    else { document.getElementById('lp_err').textContent='Wachtwoord onjuist.'; return; }
+  }
+  currentUser={ roepnummer: rn, role: sessieRol }; sessionStorage.setItem('user_roep', rn); sessionStorage.setItem('user_role', sessieRol); document.body.classList.add('logged-in'); setRoleBadgeText(sessieRol, rn); updateTopUserBadge(); updateTopStatusUI(); // actief
+  activeUsers[rn]=activeUsers[rn]||{}; activeUsers[rn].role=sessieRol; activeUsers[rn].name=namesByRoep[rn]||""; activeUsers[rn].lastSeen=Date.now(); saveActiveUsers(); showNotify('Ingelogd', `${displayName(rn)} als ${sessieRol}`, roleAccentHex(sessieRol)); ensureDoctorRecord(rn); saveDoctorAvailability(); updateTopBarAuth(true); rawShowPage('database'); updateDrukteIndicator(); }
+
+// Uitloggen
+const logoutBtn=document.getElementById('btnLogout'); logoutBtn.onclick=()=>{ const rn=currentUser.roepnummer; sessionStorage.removeItem('user_roep'); sessionStorage.removeItem('user_role'); currentUser={ roepnummer:'', role:'' }; const el=document.getElementById('roleBadge'); el.className='pill-sm'; el.textContent='Rol: —'; updateTopUserBadge(); updateTopStatusUI(); document.body.classList.remove('logged-in'); showNotify('Uitgelogd', rn||'', '#999'); updateTopBarAuth(false); goLanding(); updateDrukteIndicator(); };
+
+// eigen wachtwoord wijzigen
+const btnChangeMyPw=document.getElementById('btnChangeMyPw'); btnChangeMyPw.onclick=()=>{ if(!currentUser.roepnummer){ showNotify('Niet ingelogd','', '#cf2a2a'); return; } const cur=prompt('Huidig wachtwoord (of leeg als je alleen het algemene wachtwoord gebruikt):',''); if(cur===null) return; const eff=(passwordsByRoep[currentUser.roepnummer] || PASSWORD_GENERAL); if(cur!==eff){ showNotify('Onjuist','Huidig wachtwoord klopt niet', '#cf2a2a'); return; } const nw=prompt('Nieuw wachtwoord voor '+currentUser.roepnummer+':',''); if(nw===null||!nw.trim()) return; passwordsByRoep[currentUser.roepnummer]=nw.trim(); savePasswords(); showNotify('Wachtwoord gewijzigd', currentUser.roepnummer, '#1e90ff'); };
+
+/* Toegangsrechten */
+const ROLE_ACCESS = {
+  database: ALL_ROLES,
+  oproep:   ["Balie","Verpleegkundige","Hoofd Balie","Hoofd Verpleegkundige","Management"],
+  dokter:   ALL_ROLES.filter(r=> isDoctorLike(r) || r.startsWith("Hoofd ")).concat(["Management"]),
+  behandelingen: ALL_ROLES,
+  dokters:  ALL_ROLES,
+  apotheek: ["Apotheek","Hoofd Apotheek","Balie","Verpleegkundige","Management"],
+  kamers:   ["Verpleegkundige","Chirurg","Arts","Dokter","Hoofd Verpleegkundige","Hoofd Chirurg","Hoofd Arts","Hoofd Dokter","Management"],
+  coord:    ["Hoofd Balie","Hoofd Verpleegkundige","Hoofd Chirurg","Hoofd Arts","Hoofd Dokter","Hoofd Apotheek","Management"],
+  management:["Management"]
+};
+function ensureAllowedPage(){ const r=currentUser.role; if(r==="Management") return rawShowPage("management"); if(isDoctorLike(r))  return rawShowPage("dokter"); if(r==="Apotheek"||r==="Hoofd Apotheek") return rawShowPage("apotheek"); if(r==="Verpleegkundige"||r==="Hoofd Verpleegkundige") return rawShowPage("oproep"); if(r==="Balie"||r==="Hoofd Balie") return rawShowPage("database"); return rawShowPage("database"); }
+function showPage(p){ if(!currentUser.roepnummer){ goLogin(); return; } const allowed=ROLE_ACCESS[p]||[]; if(allowed.length && !allowed.includes(currentUser.role)){ showNotify("Geen toegang", `"${p}" voor ${currentUser.role}`, "#cf2a2a"); return ensureAllowedPage(); } rawShowPage(p); }
+function rawShowPage(p){ hideAllPublic(); hideAllPrivate(); document.body.classList.add('logged-in'); document.getElementById(p).style.display='block'; if(p==="database"){ updateLijst(); } if(p==="oproep"){ updateStats(); renderWachtlijst(); } if(p==="dokter"){ document.getElementById("dokNaam").textContent=displayName(currentUser.roepnummer); updateDokter(); } if(p==="behandelingen"){ renderBehandelingen(); } if(p==="dokters"){ renderDoctors(); } if(p==="apotheek"){ toonRecepten(); renderCollected(); } if(p==="kamers"){ renderKamers(); } if(p==="coord"){ renderCoord(); renderCoordTeamStatus(); renderCoordApplications(); } if(p==="management"){ renderManagement(); } updateTopBarAuth(true); }
+
+/* ===========================
+   DATA & OPSLAG
+=========================== */
+let patiënten=[]; let recepten=[]; let wachttijden=[]; let laatsteKlik=null; let laatsteNaam="-"; let auditLog=[];
+let doctorAvailability = {}; // { rn:{status,note,last} }
+let personRooms = {};        // { rn:"Kamer/pleknaam" }
+let behandelingenDB = [];    // {id, naam, dokter, behandeling, ts}
+let applications = [];       // sollicitaties
+
+const STORAGE_KEY = "zzh_data_full_v15"; // v6 bump
+function saveData(){ const payload={ patiënten, recepten, wachttijden, laatsteKlik, laatsteNaam, rooms:{rooms1, rooms2}, auditLog, doctorAvailability, personRooms, behandelingenDB, applications }; localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }
+function loadData(){ const raw=localStorage.getItem(STORAGE_KEY) || localStorage.getItem("zzh_data_full_v14") || localStorage.getItem("zzh_data_full_v13") || localStorage.getItem("zzh_data_full_v12"); if(!raw) return; try{ const d=JSON.parse(raw); patiënten=d.patiënten||[]; recepten=d.recepten||[]; wachttijden=d.wachttijden||[]; laatsteKlik=d.laatsteKlik||null; laatsteNaam=d.laatsteNaam||"-"; auditLog=d.auditLog||[]; doctorAvailability=d.doctorAvailability||{}; personRooms=d.personRooms||{}; behandelingenDB=d.behandelingenDB||[]; applications=d.applications||[]; if(d.rooms){ rooms1=d.rooms.rooms1||rooms1; rooms2=d.rooms.rooms2||rooms2; } }catch(e){ console.warn("Kon data niet laden:", e); }
+}
+function resetAll(){ if(!confirm("Weet je zeker dat je ALLE data wilt wissen?")) return; localStorage.removeItem(STORAGE_KEY); localStorage.removeItem("zzh_data_full_v14"); localStorage.removeItem("zzh_data_full_v13"); localStorage.removeItem("zzh_data_full_v12"); localStorage.removeItem("zz_roles_v2"); localStorage.removeItem("zz_names_v1"); localStorage.removeItem("zz_evening_roles_v1"); localStorage.removeItem("zz_active_users_v1"); localStorage.removeItem("zz_pw_v1"); location.reload(); }
+
+/* ===========================
+   HULP & UTIL
+=========================== */
+function now(){ return Date.now(); }
+function toSeconds(ms){ return Math.round(ms/1000); }
+function minutesSince(ts){ return (now() - (ts || now()))/60000; }
+function fmtDate(ts){ const d=new Date(ts); return d.toLocaleString(); }
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function pillStatus(s){ if(s==="Wachtkamer") return '<span class="tag wait">Wachtkamer</span>'; if(s==="Wordt opgehaald") return '<span class="tag pickup">Wordt opgehaald</span>'; if(s==="Bezig") return '<span class="tag busy">Bezig</span>'; if(s==="Ingepland") return '<span class="tag wait">Ingepland</span>'; return '<span class="tag done">Afgehandeld</span>'; }
+// TRIAGE
+function triageInfo(n){ n=+n; if(n===1) return {key:'red',    title:'🔴 Rood – Kritiek',        short:'Rood (T1) – Kritiek'}; if(n===2) return {key:'orange', title:'🟠 Oranje – Hoog',          short:'Oranje (T2) – Hoog'}; if(n===3) return {key:'yellow', title:'🟡 Geel – Middel',          short:'Geel (T3) – Middel'}; if(n===4) return {key:'green',  title:'🟢 Groen – Laag',           short:'Groen (T4) – Laag'}; return               {key:'blue',   title:'🔵 Blauw – Niet-urgent',  short:'Blauw (T5) – Niet-urgent'}; }
+function triagePill(n){ const t=triageInfo(n); return `<span class="tri ${t.key}">${t.title}</span>`; }
+function triageText(n){ return triageInfo(n).short; }
+function effPrio(p){ const tri = Math.max(1, Math.min(5, +p.triage||3)); const wachMin=p.wachtStart?minutesSince(p.wachtStart):0; const bonus = Math.floor(wachMin/20); return Math.max(1, tri - bonus); }
+function ensureWachtStart(p){ if(p.status==="Wachtkamer" && !p.wachtStart) p.wachtStart=now(); if(p.status!=="Wachtkamer") p.wachtStart=null; }
+function logAction(actor, action, meta){ auditLog.push({ts:now(), actor, action, meta}); saveData(); }
+
+/* ===========================
+   MEDICATIE CATALOGUS (uitgebreid)
+=========================== */
+const MEDS_CATALOG = [
+  {name:"Paracetamol", indication:"Pijn/koorts", effect:"Analgetisch/antipyretisch", dosage:"500–1000mg, max 4x/dag"},
+  {name:"Ibuprofen", indication:"Pijn/ontsteking", effect:"NSAID", dosage:"200–600mg, 3x/dag"},
+  {name:"Diclofenac", indication:"Pijn/ontsteking", effect:"NSAID", dosage:"25–50mg, 2–3x/dag"},
+  {name:"Naproxen", indication:"Pijn/ontsteking", effect:"NSAID", dosage:"250–500mg, 2x/dag"},
+  {name:"Oxycodon", indication:"Ernstige pijn", effect:"Opioïd", dosage:"5–10mg, 4x/dag"},
+  {name:"Tramadol", indication:"Matige pijn", effect:"Opioïd", dosage:"50–100mg, 3–4x/dag"},
+  {name:"Amoxicilline", indication:"Bacteriële infecties", effect:"Antibioticum (penicilline)", dosage:"500–750mg, 3x/dag"},
+  {name:"Amoxicilline/clavulaanzuur", indication:"Bacteriële infecties", effect:"Breedspectrum AB", dosage:"500/125mg, 3x/dag"},
+  {name:"Doxycycline", indication:"Bacteriële infecties", effect:"Tetracycline AB", dosage:"100mg, 1–2x/dag"},
+  {name:"Azitromycine", indication:"Bacteriële infecties", effect:"Macrolide AB", dosage:"500mg, 1x/dag (korte kuur)"},
+  {name:"Ciprofloxacine", indication:"Bacteriële infecties", effect:"Fluorochinolon AB", dosage:"250–500mg, 2x/dag"},
+  {name:"Metformine", indication:"Diabetes type 2", effect:"Biguanide", dosage:"500–1000mg, 2–3x/dag"},
+  {name:"Insuline", indication:"Diabetes", effect:"Bloedsuikerverlagend", dosage:"Volgens schema"},
+  {name:"Omeprazol", indication:"Reflux/maagklachten", effect:"PPI", dosage:"20–40mg, 1x/dag"},
+  {name:"Pantoprazol", indication:"Reflux/maagklachten", effect:"PPI", dosage:"20–40mg, 1x/dag"},
+  {name:"Amlodipine", indication:"Hypertensie", effect:"Calciumantagonist", dosage:"5–10mg, 1x/dag"},
+  {name:"Lisinopril", indication:"Hypertensie", effect:"ACE‑remmer", dosage:"5–20mg, 1x/dag"},
+  {name:"Losartan", indication:"Hypertensie", effect:"ARB", dosage:"50–100mg, 1x/dag"},
+  {name:"Metoprolol", indication:"Hypertensie/hartritmestoornis", effect:"Bètablokker", dosage:"50–100mg, 1–2x/dag"},
+  {name:"Furosemide", indication:"Oedeem/hartfalen", effect:"Lisdiureticum", dosage:"20–40mg, 1–2x/dag"},
+  {name:"Hydrochloorthiazide", indication:"Hypertensie/oedeem", effect:"Thiazide", dosage:"12.5–25mg, 1x/dag"},
+  {name:"Simvastatine", indication:"Hypercholesterolemie", effect:"Statine", dosage:"10–40mg, 1x/dag (avond)"},
+  {name:"Atorvastatine", indication:"Hypercholesterolemie", effect:"Statine", dosage:"10–40mg, 1x/dag"},
+  {name:"Salbutamol", indication:"Astma/COPD", effect:"SABA", dosage:"100–200µg zo nodig"},
+  {name:"Budesonide", indication:"Astma/COPD", effect:"ICS", dosage:"200–400µg, 1–2x/dag"},
+  {name:"Prednison", indication:"Ontsteking/auto-immuun", effect:"Corticosteroïd", dosage:"Tijdelijke kuur"},
+  {name:"Levothyroxine", indication:"Hypothyreoïdie", effect:"Schildklierhormoon", dosage:"Individueel"},
+  {name:"Citalopram", indication:"Depressie", effect:"SSRI", dosage:"10–40mg, 1x/dag"},
+  {name:"Sertraline", indication:"Depressie/angst", effect:"SSRI", dosage:"25–100mg, 1x/dag"},
+  {name:"Diazepam", indication:"Angst/spierkrampen", effect:"Benzodiazepine", dosage:"2–10mg, zo nodig"}
+];
+function buildMedDropdown(selectEl){ selectEl.innerHTML = `<option value="">(kies medicijn)</option>` + MEDS_CATALOG.map(m=> `<option value="${m.name}">${m.name}</option>`).join(""); }
+function getMed(name){ return MEDS_CATALOG.find(m=>m.name===name); }
+function onSelectMed(medName, idx){ const m = getMed(medName); const dEl = document.getElementById(`rx_d_${idx}`); const oEl = document.getElementById(`rx_o_${idx}`); const info = document.getElementById(`rx_info_${idx}`); if(m){ if(dEl) dEl.value = m.dosage || ""; if(oEl) oEl.value = `Indicatie: ${m.indication}. Effect: ${m.effect}.`; if(info) info.innerHTML = `<span class="pill">Indicatie: <strong>${m.indication}</strong></span> <span class="pill">Effect: <strong>${m.effect}</strong></span> <span class="pill">Advies: <strong>${m.dosage}</strong></span>`; }else{ if(info) info.innerHTML = ""; } }
+
+/* ===========================
+   DEPARTEMENTEN + SOLLICITATIES (publiek)
+=========================== */
+const DEPARTMENTS=["Balie","Verpleegkundige","Chirurgie","Geneeskunde","Apotheek","Management Support"];
+function renderDepartments(){ const host=document.getElementById('deptList'); if(!host) return; host.innerHTML = DEPARTMENTS.map(dep=>`
+  <details class="card">
+    <summary class="row-compact"><strong>${dep}</strong> <span class="pill">Solliciteer</span></summary>
+    <div>
+      <div class="row">
+        <div class="col"><label>Naam*</label><input id="s_nm_${dep}" placeholder="Jouw naam"/></div>
+        <div class="col"><label>Roblox gebruikersnaam*</label><input id="s_rb_${dep}" placeholder="@gebruikersnaam"/></div>
+        <div class="col"><label>Discord*</label><input id="s_dc_${dep}" placeholder="bijv. naam#1234 of @handle"/></div>
+      </div>
+      <label>Vraag 1: Waarom wil je bij ${dep} werken?*</label><textarea id="s_q1_${dep}"></textarea>
+      <label>Vraag 2: Wat zijn jouw sterke punten?*</label><textarea id="s_q2_${dep}"></textarea>
+      <label>Vraag 3: Beschrijf een lastige situatie en jouw aanpak*</label><textarea id="s_q3_${dep}"></textarea>
+      <label>Vraag 4: Hoe ga je om met feedback?*</label><textarea id="s_q4_${dep}"></textarea>
+      <label>Vraag 5: Beschikbaarheid (dagen/tijden)*</label><textarea id="s_q5_${dep}"></textarea>
+      <div class="actions"><button class="action" onclick="submitApplication('${dep}')">Versturen</button></div>
+      <div class="list-empty" id="s_msg_${dep}"></div>
+    </div>
+  </details>`).join(''); }
+function submitApplication(dep){ function gv(id){ return (document.getElementById(id).value||'').trim(); }
+  const nm=gv(`s_nm_${dep}`), rb=gv(`s_rb_${dep}`), dc=gv(`s_dc_${dep}`), q1=gv(`s_q1_${dep}`), q2=gv(`s_q2_${dep}`), q3=gv(`s_q3_${dep}`), q4=gv(`s_q4_${dep}`), q5=gv(`s_q5_${dep}`);
+  if(!nm||!rb||!dc||!q1||!q2||!q3||!q4||!q5){ document.getElementById(`s_msg_${dep}`).textContent='Vul alle velden in.'; return; }
+  applications.push({dept:dep, naam:nm, roblox:rb, discord:dc, q:[q1,q2,q3,q4,q5], status:'Ingediend', rejectionReason:'', ts:now()}); saveData(); document.getElementById(`s_msg_${dep}`).textContent='Verzonden! Je ontvangt bericht na beoordeling.'; showNotify('Sollicitatie ontvangen', dep, '#1e90ff'); }
+
+/* ===========================
+   TRIAGE + DATABASE + PLANNING
+=========================== */
+function normalizeName(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function findLastIdByName(name){ const n=normalizeName(name); const list=patiënten.filter(p=> normalizeName(p.naam)===n).sort((a,b)=> (b.aangemaakt-a.aangemaakt)); return list.length? list[0].id : ''; }
+
+function clearForm(){ document.getElementById("f_naam").value=""; document.getElementById("f_id").value=""; document.getElementById("f_rapport").value="Ja"; document.getElementById("f_triage").value="2"; document.getElementById("f_status").value="Wachtkamer"; document.getElementById("f_reden").value=""; document.getElementById('f_allergie').value=""; document.getElementById('f_afspraak').value=""; document.getElementById("valMsg").textContent=""; }
+function validate(naam,id){ let msg=[]; if(!naam||naam.length<2) msg.push("Naam is verplicht (minimaal 2 tekens)."); if(!id) msg.push("ID is verplicht."); const re=/^[A-Za-z0-9\-\_\.]{2,}$/; if(id && !re.test(id)) msg.push("ID mag letters/cijfers/-/_/. bevatten."); return msg; }
+function registreer(){ const naam=(document.getElementById("f_naam").value||"").trim(); let id=(document.getElementById("f_id").value||"").trim(); const rapport=document.getElementById("f_rapport").value; const triage=parseInt(document.getElementById("f_triage").value,10)||3; let status=document.getElementById("f_status").value; const reden=(document.getElementById("f_reden").value||"").trim(); const allergie=(document.getElementById('f_allergie').value||'').split(',').map(s=>s.trim()).filter(Boolean); const afsRaw=(document.getElementById('f_afspraak').value||'').trim(); let afspraakTs = afsRaw ? new Date(afsRaw).getTime() : null; // datetime-local
+  if(!id){ const prevId=findLastIdByName(naam); if(prevId){ id=prevId; document.getElementById('f_id').value=id; } }
+  if(afspraakTs && afspraakTs>now()) status='Ingepland';
+  const msg=validate(naam,id); if(msg.length){ document.getElementById("valMsg").textContent="• "+msg.join(" • "); return; }
+  const duplicate = patiënten.some(p=>p.id===id);
+  const p={ naam,id,medischRapport:(rapport==="Ja"),rapportLocked:false,reden,triage,status,behandeling:"",dokter:"",allergie, afspraakTs: afspraakTs, aangemaakt:now(),wachtStart:status==="Wachtkamer"?now():null };
+  if(duplicate){ p.medischRapport=true; p.rapportLocked=true; }
+  patiënten.push(p); saveData(); logAction(currentUser.roepnummer||"—","Patiënt geregistreerd",`${naam} (${id})`); updateLijst(); updateStats(); updateDokter(); showNotify("Patiënt geregistreerd", `${naam} (${id})`, "#2ecc71"); clearForm(); updateDrukteIndicator(); autoMovePlanned(); }
+
+function patientRow(p, i){ const wach=p.wachtStart? `${Math.max(0,Math.round(minutesSince(p.wachtStart)))} min` : "-"; const eff=(p.status==="Wachtkamer")? effPrio(p) : "-"; const docDisplay=p.dokter? displayName(p.dokter) : "-"; const triP=triagePill(p.triage); const afspr=p.afspraakTs? `<span class=\"pill\">Afspraak: <strong>${esc(new Date(p.afspraakTs).toLocaleString())}</strong></span>`:"";
+  return `
+  <details class="card" style="overflow:hidden">
+    <summary class="row-compact">
+      <strong>${esc(p.naam)}</strong> <span>(${esc(p.id)})</span>
+      <span>${pillStatus(p.status)}</span>
+      <span class="pill">Triage: ${triP}</span>
+      <span class="pill">Dokter: <strong>${esc(docDisplay)}</strong></span>
+      <span class="pill">Rapport: <strong>${p.medischRapport?'Ja':'Nee'}</strong>${p.rapportLocked? ' 🔒':''}</span>
+      ${p.allergie&&p.allergie.length? `<span class="pill">Allergieën: <strong>${p.allergie.map(esc).join(', ')}</strong></span>`:''}
+      ${p.status==="Wachtkamer"? `<span class="pill">Wacht: <strong>${wach}</strong></span>`:''}
+      ${p.status==="Wachtkamer"? `<span class="pill">Eff. prio: <strong>${eff}</strong></span>`:''}
+      ${afspr}
+    </summary>
+    <div style="margin-top:10px">
+      <div><em>Reden:</em> ${p.reden? esc(p.reden) : "-"}</div>
+      <div class="row" style="margin-top:10px">
+        <div class="col">
+          <label>Wijzig status</label>
+          <select onchange="setStatus(${i}, this.value)">
+            <option ${p.status==="Wachtkamer"?"selected":""}>Wachtkamer</option>
+            <option ${p.status==="Wordt opgehaald"?"selected":""}>Wordt opgehaald</option>
+            <option ${p.status==="Bezig"?"selected":""}>Bezig</option>
+            <option ${p.status==="Afgehandeld"?"selected":""}>Afgehandeld</option>
+            <option ${p.status==="Ingepland"?"selected":""}>Ingepland</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Triage</label>
+          <select onchange="wijzigTriage(${i}, this.value)">
+            <option value="1" ${+p.triage===1?"selected":""}>🔴 Rood – Kritiek (T1)</option>
+            <option value="2" ${+p.triage===2?"selected":""}>🟠 Oranje – Hoog (T2)</option>
+            <option value="3" ${+p.triage===3?"selected":""}>🟡 Geel – Middel (T3)</option>
+            <option value="4" ${+p.triage===4?"selected":""}>🟢 Groen – Laag (T4)</option>
+            <option value="5" ${+p.triage===5?"selected":""}>🔵 Blauw – Niet-urgent (T5)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Medisch rapport</label>
+          <select ${p.rapportLocked? 'disabled': ''} onchange="wijzigRapport(${i}, this.value)"><option ${p.medischRapport?"selected":""}>Ja</option><option ${!p.medischRapport?"selected":""}>Nee</option></select>
+        </div>
+      </div>
+      <label style="margin-top:10px">Allergieën (komma-gescheiden)</label>
+      <input value="${(p.allergie||[]).join(', ').replace(/"/g,'&quot;')}" onchange="wijzigAllergie(${i}, this.value)"/>
+      <label style="margin-top:10px">Reden</label>
+      <textarea onchange="wijzigReden(${i}, this.value)">${p.reden||""}</textarea>
+      <label style="margin-top:10px">Afspraak (optioneel)</label>
+      <input type="datetime-local" value="${p.afspraakTs ? new Date(p.afspraakTs).toISOString().slice(0,16) : ''}" onchange="wijzigAfspraak(${i}, this.value)"/>
+      ${p.status==="Afgehandeld" && p.behandeling? `<div class="pill" style="margin-top:10px">Behandeling: <strong style="margin-left:6px">${esc(p.behandeling)}</strong></div>` : ""}
+      <div class="actions" style="margin-top:10px">
+        <button class="action danger" onclick="verwijderPatient(${i})">Verwijderen</button>
+      </div>
+    </div>
+  </details>`; }
+function sectionBlock(title, items, open=false){ const count=items.length; return `
+  <details class="section" ${open?"open":""}>
+    <summary><span>${title}</span><span class="count-badge">${count}</span></summary>
+    <div style="padding:12px 16px">${count? items.join("") : `<div class="list-empty">Geen patiënten in deze sectie.</div>`}</div>
+  </details>`; }
+function updateLijst(){ autoMovePlanned(); const lijst=document.getElementById("patientLijst"); if(!lijst) return; const zoek=(document.getElementById("zoek").value||"").toLowerCase(); const fStatus=document.getElementById("filter_status").value; const fTri=document.getElementById("filter_triage").value; let data=patiënten.slice().filter(p=>{ const hit=p.naam.toLowerCase().includes(zoek)||p.id.toLowerCase().includes(zoek)||(p.reden||"").toLowerCase().includes(zoek); const sOK=!fStatus||p.status===fStatus; const trOK=!fTri||String(p.triage)===String(fTri); return hit&&sOK&&trOK; }).sort((a,b)=> b.aangemaakt-a.aangemaakt); const g={ "Wachtkamer":[], "Wordt opgehaald":[], "Bezig":[], "Afgehandeld":[], "Ingepland":[] }; data.forEach(p=> g[p.status]?.push(patientRow(p, patiënten.indexOf(p)))); lijst.innerHTML = sectionBlock("Wachtkamer", g["Wachtkamer"], true) + sectionBlock("Wordt opgehaald", g["Wordt opgehaald"], true) + sectionBlock("Bezig", g["Bezig"], true) + sectionBlock("Afgehandeld (archief)", g["Afgehandeld"], false) + sectionBlock("Ingepland (afspraken)", g["Ingepland"], false); }
+function zoekPatient(){ updateLijst(); }
+function resetZoek(){ document.getElementById("zoek").value=""; document.getElementById("filter_status").value=""; document.getElementById("filter_triage").value=""; updateLijst(); }
+
+function setStatus(i,status){ const p=patiënten[i]; const old=p.status; if(status==="Ingepland"){ if(!p.afspraakTs || p.afspraakTs<=now()){ const dt=prompt('Datum/tijd voor afspraak (YYYY-MM-DDTHH:MM):', new Date(Date.now()+60*60*1000).toISOString().slice(0,16)); if(!dt){ updateLijst(); return; } const ts=new Date(dt).getTime(); if(!ts || isNaN(ts) || ts<=now()){ showNotify('Ongeldige datum/tijd','Kies een moment in de toekomst.', '#cf2a2a'); updateLijst(); return; } p.afspraakTs=ts; p.wachtStart=null; } }
+  p.status=status; ensureWachtStart(p); saveData(); updateLijst(); updateStats(); updateDokter(); renderDoctors(); logAction(currentUser.roepnummer||"—","Status gewijzigd",`${p.naam} (${p.id}) ${old} -> ${status}`); showNotify("Status gewijzigd", `${p.naam} → ${status}`, "#1e90ff"); updateDrukteIndicator(); if(status==='Afgehandeld'){ pushBehandelingRecord(i); if(p.dokter){ ensureDoctorRecord(p.dokter); doctorAvailability[p.dokter].status='Beschikbaar'; doctorAvailability[p.dokter].last=now(); saveData(); renderDoctors(); updateTopStatusUI(); setRoomBusyForPerson(p.dokter,false); } } }
+function wijzigTriage(i,val){ patiënten[i].triage=parseInt(val,10)||3; saveData(); updateLijst(); updateStats(); updateDokter(); showNotify("Triage gewijzigd", `${patiënten[i].naam} → ${triageText(patiënten[i].triage)}`, "#ffb84d"); }
+function wijzigRapport(i,val){ if(patiënten[i].rapportLocked) { showNotify('Vergrendeld', 'Rapport kan niet gewijzigd worden (ID-match)', '#cf2a2a'); return; } patiënten[i].medischRapport=(val==="Ja"); saveData(); updateLijst(); }
+function wijzigReden(i,val){ patiënten[i].reden=val; saveData(); }
+function wijzigAllergie(i,val){ patiënten[i].allergie=(val||'').split(',').map(s=>s.trim()).filter(Boolean); saveData(); }
+function wijzigAfspraak(i, val){ const ts = val? new Date(val).getTime(): null; patiënten[i].afspraakTs = ts || null; if(ts && patiënten[i].status!=='Ingepland' && ts>now()){ patiënten[i].status='Ingepland'; patiënten[i].wachtStart=null; }
+  saveData(); updateLijst(); autoMovePlanned(); }
+function verwijderPatient(i){ const p=patiënten[i]; if(!confirm(`Patiënt verwijderen: ${p.naam} (${p.id}) ?`)) return; const oldId=p.id; patiënten.splice(i,1); recepten=recepten.filter(r=>r.id!==oldId); saveData(); updateLijst(); updateDokter(); updateStats(); toonRecepten(); renderCollected(); logAction(currentUser.roepnummer||"—","Patiënt verwijderd",`${p.naam} (${oldId})`); showNotify("Patiënt verwijderd", `${p.naam} (${oldId})`, "#cf2a2a"); updateDrukteIndicator(); }
+
+/* Auto‑move ingepland → wachtkamer */
+function autoMovePlanned(){ let moved=0; patiënten.forEach(p=>{ if(p.status==='Ingepland' && p.afspraakTs && p.afspraakTs<=now()){ p.status='Wachtkamer'; p.wachtStart=now(); moved++; logAction(currentUser.roepnummer||"—","Auto naar wachtkamer",`${p.naam} (${p.id})`); } }); if(moved){ saveData(); updateStats(); renderWachtlijst(); showNotify('Afspraken gestart', `${moved} → Wachtkamer`, '#1e90ff'); }
+}
+setInterval(autoMovePlanned, 30000);
+
+/* Demo */
+function seedDemo(){ if(!confirm("Demo-data toevoegen?")) return; const base=[ {naam:"Sanne Visser", id:"D-1001", reden:"Hevige buikpijn", triage:1, status:"Wachtkamer", rapport:true, allergie:["penicilline"], afspraakTs:null}, {naam:"Milan de Boer", id:"D-1002", reden:"Hoofdpijn", triage:3, status:"Ingepland", rapport:false, allergie:[], afspraakTs: now()+90*60000}, {naam:"Noor Bakker", id:"D-1003", reden:"Gebroken pols", triage:2, status:"Bezig", rapport:true, allergie:["noten"], afspraakTs:null}, {naam:"Tim Janssen", id:"D-1004", reden:"Keelpijn", triage:5, status:"Wachtkamer", rapport:false, allergie:[], afspraakTs:null} ]; base.forEach(b=>{ patiënten.push({ naam:b.naam, id:b.id, medischRapport:b.rapport, rapportLocked:false, reden:b.reden, triage:b.triage, status:b.status, behandeling:"", dokter:"", allergie:b.allergie, afspraakTs:b.afspraakTs, aangemaakt:now(), wachtStart:b.status==="Wachtkamer"?now()-Math.floor(Math.random()*35)*60000:null }); }); if(!recepten.length){ recepten.push({id:"D-1003", naam:"Noor Bakker", medicijn:"Paracetamol", dosering:"500mg 3x/dag", opmerkingen:"na eten", status:"Aangeschreven", timestamp:now()-3600000}); } applications.push({dept:'Balie', naam:'Demo Kandidaat', roblox:'@demokandidaat', discord:'demo#1234', q:['Ik ben gemotiveerd.','Teamplayer.','Lost problemen op.','Leert van feedback.','Avonden en weekenden.'], status:'Ingediend', rejectionReason:'', ts:now()}); saveData(); updateLijst(); updateStats(); updateDokter(); toonRecepten(); renderCollected(); renderKamers(); renderDoctors(); renderDepartments(); renderCoordApplications(); showNotify("Demo-data toegevoegd", `${base.length} patiënten + 1 sollicitatie`, "#1e90ff"); updateDrukteIndicator(); }
+
+/* ===========================
+   OPROEPSYSTEEM
+=========================== */
+function getWachtkamer(){ return patiënten.map((p,idx)=>({...p,_idx:idx})).filter(p=>p.status==="Wachtkamer"); }
+function renderWachtlijst(){ const div=document.getElementById("wachtlijst"); if(!div) return; const wacht=getWachtkamer().sort((a,b)=>{ const ea=effPrio(a), eb=effPrio(b); if(ea!==eb) return ea-eb; return (a.wachtStart||0)-(b.wachtStart||0); }); div.innerHTML = (wacht.length? wacht.map(p=>`
+    <div class="card">
+      <strong>${esc(p.naam)}</strong> (${esc(p.id)}) — ${pillStatus(p.status)}<br/>
+      <span class="pill">Triage: ${triagePill(p.triage)}</span>
+      <span class="pill">Wacht: <strong>${p.wachtStart?Math.max(0,Math.round(minutesSince(p.wachtStart))):0} min</strong></span>
+      <span class="pill">Eff. prio: <strong>${effPrio(p)}</strong></span>
+    </div>`).join("") : `<div class="card list-empty">Geen patiënten in de wachtkamer.</div>`); }
+function updateStats(){ const n = patiënten.filter(p=> p.status==="Wachtkamer" || p.status==="Wordt opgehaald").length; const lnEl=document.getElementById("laatste"); if(lnEl) lnEl.innerText=laatsteNaam||"-"; const wtEl=document.getElementById("wachttijd"); if(wtEl){ const gem=(wachttijden.length>0)? Math.round(wachttijden.reduce((a,b)=>a+b,0)/wachttijden.length) : 0; wtEl.innerText=gem; } const aEl=document.getElementById("aantal"); if(aEl) aEl.innerText=n; updateDrukteIndicator(); }
+function resetAvgWait(){ if(!confirm("Wachttijd‑metingen resetten?")) return; wachttijden = []; saveData(); updateStats(); showNotify("Wachttijd gereset", "Gem. wachttijd is nu 0 sec", "#1e90ff"); }
+function playDing(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type="triangle"; o.frequency.value=880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.4); o.start(); o.stop(ctx.currentTime+0.45);}catch(e){} }
+function volgende(){ const wacht=getWachtkamer(); if(!wacht.length){ showNotify("Geen wachtenden", "Er staat niemand in de wachtkamer", "#999"); return; } wacht.sort((a,b)=>{ const ea=effPrio(a), eb=effPrio(b); if(ea!==eb) return ea-eb; return (a.wachtStart||0)-(b.wachtStart||0); }); const p=wacht[0]; patiënten[p._idx].status="Wordt opgehaald"; if(p.wachtStart){ wachttijden.push(toSeconds(now()-p.wachtStart)); } laatsteKlik=now(); laatsteNaam=p.naam; saveData(); const uiMsg=`→ Wordt opgehaald: ${p.naam} (${p.id})`; logAction(currentUser.roepnummer||"—","Patiënt opgeroepen",uiMsg); const dingMsg=`<div class=\"card\" style=\"text-align:center; font-size:24px\"><strong>${esc(p.naam)}</strong> wordt nu opgehaald</div>`; document.getElementById('wachtlijst').insertAdjacentHTML('afterbegin', dingMsg); playDing(); updateStats(); renderWachtlijst(); updateLijst(); updateDokter(); }
+let autoCall=false, autoTimer=null; function toggleAutoCall(){ autoCall=!autoCall; document.getElementById("autoCallTxt").textContent="Auto‑oproep: "+(autoCall?"Aan":"Uit"); if(autoCall){ autoTimer=setInterval(()=>{ if(getWachtkamer().length>0) volgende(); },20000);} else if(autoTimer){ clearInterval(autoTimer); autoTimer=null; } }
+
+/* ===========================
+   ROOMS (bezet/vrij) – handmatig togglen
+=========================== */
+let rooms1=[{naam:"SEH 101",bezet:false},{naam:"SEH 102",bezet:false},{naam:"SEH 103",bezet:false},{naam:"SEH 104",bezet:false}];
+let rooms2=[{naam:"Huisartsenpost 204",bezet:false},{naam:"Uitslaap 201",bezet:false},{naam:"Uitslaap 202",bezet:false},{naam:"Uitslaap 203",bezet:false},{naam:"OK1",bezet:false},{naam:"OK2",bezet:false},{naam:"Kantoor 205",bezet:false},{naam:"Kantoor 206",bezet:false}];
+function findRoomByName(name){ let idx=rooms1.findIndex(r=>r.naam===name); if(idx>=0) return {list:"rooms1", index:idx, obj:rooms1[idx]}; idx=rooms2.findIndex(r=>r.naam===name); if(idx>=0) return {list:"rooms2", index:idx, obj:rooms2[idx]}; return null; }
+function toggleRoomByName(name){ const ref=findRoomByName(name); if(!ref) return; ref.obj.bezet = !ref.obj.bezet; saveData(); renderKamers(); showNotify(ref.obj.bezet? 'Kamer bezet' : 'Kamer vrij', name, ref.obj.bezet? '#e74c3c' : '#2ecc71'); updateRoomCounts(); }
+function setRoomBusyForPerson(rn, busy){ const place = personRooms[rn]; if(!place) return; const ref = findRoomByName(place); if(ref){ ref.obj.bezet = !!busy; saveData(); renderKamers(); } }
+function renderKamers(){ const r1=document.getElementById("rooms1"), r2=document.getElementById("rooms2"); if(!r1||!r2) return; r1.innerHTML=""; r2.innerHTML=""; function mk(container,item){ const div=document.createElement("div"); div.className="room "+(item.bezet?"occupied":"available"); div.innerHTML = `<span class="name">${item.naam}</span><span>${item.bezet? 'Bezet' : 'Beschikbaar'}</span>`; div.onclick=()=>toggleRoomByName(item.naam); container.appendChild(div); } rooms1.forEach(r=>mk(r1,r)); rooms2.forEach(r=>mk(r2,r)); updateRoomCounts(); }
+function updateRoomCounts(){ const all=rooms1.concat(rooms2); const bezet=all.filter(r=>r.bezet).length; const vrij=all.length-bezet; document.getElementById("countVrij").innerText=vrij; document.getElementById("countBezet").innerText=bezet; }
+
+/* ===========================
+   DOKTERSPORTAAL + BEHANDELINGEN
+=========================== */
+function dokterCard(p, idx){ const canRx=canPrescribe(currentUser.role); const rxUI = canRx ? `
+    <div style="margin-top:14px; border-top:1px dashed #cfd6dd; padding-top:12px">
+      <strong>Medicijn voorschrijven</strong>
+      <div class="row">
+        <div class="col">
+          <label>Medicijn</label>
+          <select id="rx_sel_${idx}" onchange="onSelectMed(this.value, ${idx})"></select>
+        </div>
+        <div class="col"><label>Dosering</label><input id="rx_d_${idx}" placeholder="Bijv. 500mg 3x/dag" /></div>
+        <div class="col"><label>Opmerkingen</label><input id="rx_o_${idx}" placeholder="Optioneel" /></div>
+      </div>
+      <div id="rx_info_${idx}" class="row-compact" style="margin-top:6px"></div>
+      <div class="actions">
+        <button class="action" onclick="voorschrijf(${idx})">Aanschrijven</button>
+      </div>
+    </div>` : `<div class="list-empty" style="margin-top:8px">Voorschrijven vereist (hoofd)Dokter/Arts/Chirurg of Management.</div>`;
+  return `
+  <div class="card">
+    <div class="row">
+      <div class="col"><strong>${esc(p.naam)}</strong> (${esc(p.id)})</div>
+      <div class="col">${pillStatus(p.status)}</div>
+      <div class="col"><span class="pill">Triage: ${triagePill(p.triage)}</span></div>
+      <div class="col"><span class="pill">Toegewezen: <strong>${p.dokter? esc(displayName(p.dokter)) : '-'}</strong></span></div>
+      <div class="col"><span class="pill">Wacht-min: <strong>${p.wachtStart?Math.max(0,Math.round(minutesSince(p.wachtStart))):"-"}</strong></span></div>
+    </div>
+    <div style="margin-top:10px"><em>Reden:</em> ${p.reden ? esc(p.reden) : "-"}</div>
+
+    <div class="actions" style="margin-top:10px">
+      ${(p.status==="Wordt opgehaald" || p.status==="Wachtkamer") ? `<button class="action" onclick="claimPatient(${idx})">Haal op (claim)</button>` : ``}
+      ${ p.status!=="Afgehandeld" ? `<button class="action" onclick="setStatus(${idx},'Bezig')">Zet op Bezig</button>` : ``}
+    </div>
+
+    <label style="margin-top:12px">Behandeling (verplicht voor "Afgehandeld")</label>
+    <textarea id="beh_${idx}" placeholder="Beschrijving behandeling...">${p.behandeling || ""}</textarea>
+    <div class="actions">
+      <button class="action" onclick="saveBehandeling(${idx})">Behandeling opslaan</button>
+      <button class="action" onclick="afronden(${idx})">Afgehandeld</button>
+    </div>
+
+    ${rxUI}
+  </div>`; }
+function updateDokter(){ const div=document.getElementById("dokterLijst"); if(!div) return; let data=patiënten.filter(p=> p.status!=="Afgehandeld"); const filter=(document.getElementById("dokFilter")?.value)||"alle"; if(filter==="mijn") data=data.filter(p=> p.dokter && currentUser.roepnummer && p.dokter===currentUser.roepnummer); const order={"Wordt opgehaald":0,"Bezig":1,"Wachtkamer":2,"Ingepland":3,"Afgehandeld":4}; data.sort((a,b)=> (order[a.status]-order[b.status]) || (a.aangemaakt-b.aangemaakt)); div.innerHTML = data.length? data.map(p=> dokterCard(p, patiënten.indexOf(p))).join("") : `<div class="card list-empty">Geen actieve patiënten.</div>`; data.forEach(p=>{ const idx=patiënten.indexOf(p); const sel=document.getElementById(`rx_sel_${idx}`); const info=document.getElementById(`rx_info_${idx}`); if(sel){ buildMedDropdown(sel); } if(info){ info.innerHTML=""; } }); }
+function claimPatient(i){ if(!currentUser.roepnummer){ showNotify("Niet ingelogd", "", "#cf2a2a"); return; } const p=patiënten[i]; p.dokter=currentUser.roepnummer; p.status="Bezig"; saveData(); setRoomBusyForPerson(currentUser.roepnummer, true); ensureDoctorRecord(currentUser.roepnummer); doctorAvailability[currentUser.roepnummer].status="Tijdelijk bezet"; doctorAvailability[currentUser.roepnummer].last=now(); saveData(); updateTopStatusUI(); updateDokter(); updateLijst(); showNotify("Patiënt geclaimd", `${esc(p.naam)} → ${displayName(currentUser.roepnummer)}`, roleAccentHex(currentUser.role)); updateDrukteIndicator(); }
+function saveBehandeling(i){ const ta=document.getElementById(`beh_${i}`); if(!ta) return; patiënten[i].behandeling=ta.value.trim(); saveData(); updateDokter(); showNotify("Behandeling opgeslagen", `${patiënten[i].naam}`, "#1e90ff"); }
+function pushBehandelingRecord(i){ const p=patiënten[i]; if(!p.behandeling) return; behandelingenDB.push({id:p.id, naam:p.naam, dokter:p.dokter||currentUser.roepnummer||'', behandeling:p.behandeling, ts:now()}); saveData(); }
+function afronden(i){ const p=patiënten[i]; const ta=document.getElementById(`beh_${i}`); const beh=(ta?ta.value.trim():p.behandeling||"").trim(); if(!beh){ showNotify("Behandeling ontbreekt", "Vul eerst de behandeling in.", "#cf2a2a"); return; } p.behandeling=beh; p.status="Afgehandeld"; p.wachtStart=null; saveData(); pushBehandelingRecord(i); if(p.dokter){ setRoomBusyForPerson(p.dokter, false); ensureDoctorRecord(p.dokter); doctorAvailability[p.dokter].status='Beschikbaar'; doctorAvailability[p.dokter].last=now(); saveData(); renderDoctors(); updateTopStatusUI(); } updateDokter(); updateLijst(); updateStats(); renderDoctors(); showNotify("Patiënt afgehandeld", `${p.naam}`, "#2ecc71"); updateDrukteIndicator(); }
+function voorschrijf(i){ if(!canPrescribe(currentUser.role)){ showNotify("Geen rechten", "Deze rol mag geen recept aanschrijven.", "#cf2a2a"); return; } const p=patiënten[i]; const sEl=document.getElementById(`rx_sel_${i}`), dEl=document.getElementById(`rx_d_${i}`), oEl=document.getElementById(`rx_o_${i}`); const medicijn=(sEl?.value||"").trim(); const dosering=(dEl?.value||"").trim(); const opmerkingen=(oEl?.value||"").trim(); if(!medicijn){ showNotify("Kies medicijn", "Selecteer eerst een medicijn.", "#cf2a2a"); return; } const rx={ id:p.id, naam:p.naam, medicijn, dosering, opmerkingen, status:"Aangeschreven", timestamp:now() }; recepten.push(rx); saveData(); toonRecepten(); renderCollected(); if(dEl) dEl.value=""; if(oEl) oEl.value=""; if(sEl) sEl.value=""; const info=document.getElementById(`rx_info_${i}`); if(info) info.innerHTML=""; showNotify("Recept aangeschreven", `${p.naam} – ${medicijn}`, "#6c5ce7"); }
+
+/* ===========================
+   BEHANDELINGEN – lijst
+=========================== */
+function renderBehandelingen(){ const host=document.getElementById('behandelingenLijst'); if(!host) return; const q=(document.getElementById('b_zoek').value||'').toLowerCase(); const rows=behandelingenDB.filter(x=> !q || (x.naam||'').toLowerCase().includes(q) || (x.id||'').toLowerCase().includes(q) || (displayName(x.dokter||'').toLowerCase().includes(q))).sort((a,b)=> b.ts-a.ts).map(x=>`
+  <div class="card">
+    <div class="row">
+      <div class="col"><strong>${esc(x.naam)}</strong> (${esc(x.id)})</div>
+      <div class="col"><span class="pill">Dokter: <strong>${esc(displayName(x.dokter||''))}</strong></span></div>
+      <div class="col" style="color:#666">${fmtDate(x.ts)}</div>
+    </div>
+    <div style="margin-top:8px"><em>Behandeling:</em> ${esc(x.behandeling)}</div>
+  </div>`).join(''); host.innerHTML = rows || `<div class="list-empty">Nog geen behandelingen geregistreerd.</div>`; }
+
+/* ===========================
+   APOTHEEK
+=========================== */
+function receptCard(r, idx){ return `
+  <div class="card">
+    <div><strong>${esc(r.naam)}</strong> (${esc(r.id)})</div>
+    <div style="margin-top:4px">
+      <span class="pill">Medicijn: <strong>${esc(r.medicijn||"")}</strong></span>
+      ${r.dosering?`<span class="pill">Dosering: <strong>${esc(r.dosering)}</strong></span>`:""}
+      ${r.opmerkingen?`<span class="pill">Opmerking: <strong>${esc(r.opmerkingen)}</strong></span>`:""}
+    </div>
+    <div style="margin-top:6px; font-size:12px; color:#888">Aangeschreven: ${fmtDate(r.timestamp)}</div>
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>Status</label>
+        <select onchange="setReceptStatus(${idx}, this.value)">
+          <option ${r.status==="Aangeschreven"?"selected":""}>Aangeschreven</option>
+          <option ${r.status==="Klaar"?"selected":""}>Klaar</option>
+          <option ${r.status==="Gehaald"?"selected":""}>Gehaald</option>
+        </select>
+      </div>
+    </div>
+  </div>`; }
+function toonRecepten(){ const div=document.getElementById("receptLijst"); if(!div) return; const zoek=(document.getElementById("zoekRecept").value||"").toLowerCase(); const f=document.getElementById("filterReceptStatus").value; let data=recepten.slice().filter(r=>{ const hit=(r.naam||"").toLowerCase().includes(zoek)||(r.id||"").toLowerCase().includes(zoek)||(r.medicijn||"").toLowerCase().includes(zoek); const notCollected = r.status!=="Gehaald"; const stOK=!f || (f!=="Gehaald" ? r.status===f : r.status!=="Gehaald"); return hit && notCollected && stOK; }).sort((a,b)=> b.timestamp-a.timestamp); div.innerHTML = data.length? data.map((r,ix)=>receptCard(r, recepten.indexOf(r))).join("") : `<div class="card list-empty">Geen recepten (afgehaald staan onderaan).</div>`; }
+function renderCollected(){ const host=document.getElementById("collectedList"); if(!host) return; const list = recepten.filter(r=>r.status==="Gehaald").sort((a,b)=> (b.collectedAt||0)-(a.collectedAt||0)); host.innerHTML = list.length? list.map(r=> `
+    <details class="card">
+      <summary class="row-compact">
+        <strong>${esc(r.naam)}</strong> <span>(${esc(r.id)})</span>
+        <span class="pill">Medicijn: <strong>${esc(r.medicijn||"")}</strong></span>
+        <span class="pill">Gehaald: <strong>${r.collectedAt?fmtDate(r.collectedAt):"—"}</strong></span>
+      </summary>
+      <div style="margin-top:8px">
+        ${r.dosering?`<div class="pill">Dosering: <strong>${esc(r.dosering)}</strong></div>`:""}
+        ${r.opmerkingen?`<div class="pill" style="margin-top:6px">Opmerking: <strong>${esc(r.opmerkingen)}</strong></div>`:""}
+        <div style="margin-top:6px; font-size:12px; color:#666">Aangeschreven: ${fmtDate(r.timestamp)}</div>
+      </div>
+    </details>
+  `).join("") : `<div class="list-empty">Nog niemand heeft een recept gehaald.</div>`; }
+function zoekRecept(){ toonRecepten(); }
+function resetReceptZoek(){ document.getElementById("zoekRecept").value=""; document.getElementById("filterReceptStatus").value=""; toonRecepten(); }
+function setReceptStatus(i,val){ const r=recepten[i]; const old=r.status; r.status=val; if(val==="Gehaald"){ r.collectedAt = now(); } saveData(); toonRecepten(); renderCollected(); logAction(currentUser.roepnummer||"—","Recept status",`${r.naam} (${r.id}) ${old} -> ${val}`); if(val==="Gehaald"){ showNotify("Recept afgehaald", `${r.naam} – ${r.medicijn}`, "#2ecc71"); } }
+
+/* ===========================
+   TEAMCOÖRDINATIE + SOLLICITATIES
+=========================== */
+function renderCoord(){ const personsSelect=document.getElementById("coordPerson"); const assignToSelect=document.getElementById("coordAssignTo"); const roomSelect=document.getElementById("coordRoom"); const patientSelect=document.getElementById("coordPatient"); if(!personsSelect||!roomSelect||!patientSelect||!assignToSelect) return; const set = new Set([...Object.keys(rolesByRoep), ...Object.keys(activeUsers)]); const persons = Array.from(set).sort(); const makeOpt = rn => `<option value="${rn}">${displayName(rn)} — ${(eveningRoles.map?.[rn]||rolesByRoep[rn]||"(geen rol)")}</option>`; personsSelect.innerHTML = persons.map(makeOpt).join(""); assignToSelect.innerHTML = persons.map(makeOpt).join(""); const allRooms = rooms1.map(r=>r.naam).concat(rooms2.map(r=>r.naam), ["Balie 1","Balie 2","Balie 3","Balie 4","Apotheek"]); roomSelect.innerHTML = allRooms.map(n=> `<option value="${n}">${n}</option>`).join(""); const pats = patiënten.filter(p=> p.status==="Wachtkamer" || p.status==="Wordt opgehaald"); patientSelect.innerHTML = pats.map(p=> `<option value="${p.id}">${esc(p.naam)} (${esc(p.id)}) — ${p.status}</option>`).join(""); renderCoordAssignments(); }
+function assignRoomToPerson(){ const rn=document.getElementById("coordPerson").value; const room=document.getElementById("coordRoom").value; if(!rn||!room) return; personRooms[rn]=room; saveData(); renderCoordAssignments(); showNotify("Plek toegewezen", `${displayName(rn)} → ${room}`, "#1e90ff"); }
+function clearRoomFromPerson(){ const rn=document.getElementById("coordPerson").value; if(!rn) return; delete personRooms[rn]; saveData(); renderCoordAssignments(); showNotify("Toewijzing verwijderd", displayName(rn), "#999"); }
+function renderCoordAssignments(){ const div=document.getElementById("coordAssignments"); if(!div) return; const rows = Object.keys(personRooms).sort().map(rn=> `<div class="pill" style="margin:4px 6px 0 0">${displayName(rn)} → <strong>${personRooms[rn]}</strong></div>`).join(""); div.innerHTML = rows || `<div class="list-empty">Nog geen toewijzingen.</div>`; }
+function assignPatientToPerson(){ const pid=document.getElementById("coordPatient").value; const rn=document.getElementById("coordAssignTo").value; const i=patiënten.findIndex(p=>p.id===pid); if(i<0) return; patiënten[i].dokter=rn; saveData(); updateLijst(); updateDokter(); ensureDoctorRecord(rn); doctorAvailability[rn].status="Tijdelijk bezet"; doctorAvailability[rn].last=now(); saveData(); renderDoctors(); showNotify("Patiënt toegewezen", `${patiënten[i].naam} → ${displayName(rn)}`, roleAccentHex(rolesByRoep[rn]||eveningRoles.map?.[rn]||activeUsers[rn]?.role||"")); }
+function markAssignedPickedUp(){ const pid=document.getElementById("coordPatient").value; const i=patiënten.findIndex(p=>p.id===pid); if(i<0) return; if(!patiënten[i].dokter){ showNotify("Geen toewijzing", "Wijs eerst een persoon toe.", "#cf2a2a"); return; } const rn=patiënten[i].dokter; patiënten[i].status="Bezig"; saveData(); updateLijst(); updateDokter(); setRoomBusyForPerson(rn, true); ensureDoctorRecord(rn); doctorAvailability[rn].status="Tijdelijk bezet"; doctorAvailability[rn].last=now(); saveData(); renderDoctors(); showNotify("Gemarkeerd als opgehaald", `${patiënten[i].naam}`, "#1e90ff"); }
+function renderCoordTeamStatus(){ const div=document.getElementById("coordTeamStatus"); if(!div) return; const cutoff = Date.now() - 6*60*60*1000; const list = Object.entries(activeUsers).filter(([rn,info])=> (info.lastSeen||0)>=cutoff).sort((a,b)=> a[0].localeCompare(b[0])).map(([rn,info])=>{ const role=info.role||rolesByRoep[rn]||"(rol?)"; const avail=doctorAvailability[rn]?.status || "—"; const place=personRooms[rn] || "—"; return `<div class="row-compact"><span class="${roleClass(role)}">${role}</span><strong>${displayName(rn)}</strong><span class="pill">Beschikbaarheid: <strong>${esc(avail)}</strong></span><span class="pill">Toegewezen: <strong>${esc(place)}</strong></span></div>`; }); div.innerHTML = list.length? list.join("") : `<div class="list-empty">Nog niemand online.</div>`; }
+
+/* Sollicitaties – beheer in Teamcoördinatie */
+function renderCoordApplications(){ const host=document.getElementById('coordApplications'); if(!host) return; const rows=applications.slice().sort((a,b)=> b.ts-a.ts).map(x=>{ const idx=applications.indexOf(x); return `
+  <div class="card">
+    <div class="row">
+      <div class="col"><strong>${esc(x.naam)}</strong></div>
+      <div class="col"><span class="pill">Dept: <strong>${esc(x.dept)}</strong></span></div>
+      <div class="col"><span class="pill">Status: <strong>${esc(x.status)}</strong></span></div>
+      <div class="col" style="font-size:12px;color:#666">${fmtDate(x.ts)}</div>
+    </div>
+    <div style="margin-top:8px"><em>Roblox:</em> ${esc(x.roblox)} — <em>Discord:</em> ${esc(x.discord)}</div>
+    <ol style="margin-top:6px">${x.q.map(q=>`<li>${esc(q)}</li>`).join('')}</ol>
+    ${x.status==='Geweigerd'&&x.rejectionReason? `<div class="pill">Afwijsreden: <strong>${esc(x.rejectionReason)}</strong></div>`:''}
+    <div class="actions" style="margin-top:8px">
+      <button class="action" onclick="approveApplication(${idx})">Goedkeuren</button>
+      <button class="action danger" onclick="rejectApplication(${idx})">Afwijzen</button>
+    </div>
+  </div>`; }).join('');
+  host.innerHTML = rows || '<div class="list-empty">Nog geen sollicitaties.</div>';
+}
+function approveApplication(ix){ const x=applications[ix]; if(!x) return; x.status='Goedgekeurd'; x.rejectionReason=''; saveData(); renderCoordApplications(); showNotify('Sollicitatie goedgekeurd', x.naam, '#2ecc71'); }
+function rejectApplication(ix){ const x=applications[ix]; if(!x) return; const reason=prompt('Afwijsreden voor '+(x.naam||'kandidaat')+':',''); if(reason===null) return; x.status='Geweigerd'; x.rejectionReason=reason.trim(); saveData(); renderCoordApplications(); showNotify('Sollicitatie geweigerd', x.naam, '#e74c3c'); }
+
+/* ===========================
+   MANAGEMENT – panelen
+=========================== */
+function renderManagement(){ showMgmtPanel('stats'); }
+function showMgmtPanel(which){ const host=document.getElementById("mgmtDynamic"); if(!host) return;
+  if(which==="stats"){ const patsToday=patiënten.filter(p=> new Date(p.aangemaakt).toLocaleDateString()===new Date().toLocaleDateString()); const handledToday=behandelingenDB.filter(b=> new Date(b.ts).toLocaleDateString()===new Date().toLocaleDateString()); const byDoc={}; handledToday.forEach(b=>{ const k=b.dokter||"(onbekend)"; byDoc[k]=(byDoc[k]||0)+1; }); const top=Object.entries(byDoc).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`<div class="row-compact"><span class="pill">${displayName(k)}</span><strong>${v}</strong></div>`).join('')||'<div class="list-empty">Nog geen behandelingen vandaag.</div>'; const waiting = patiënten.filter(p=> p.status==="Wachtkamer").length; host.innerHTML = `<div class="card"><h3>Statistieken (vandaag)</h3><div class="row-compact"><span class="pill">Nieuwe patiënten</span><strong>${patsToday.length}</strong></div><div class="row-compact"><span class="pill">Afgehandeld</span><strong>${handledToday.length}</strong></div><div class="row-compact"><span class="pill">Wachtkamer nu</span><strong>${waiting}</strong></div><h4 style="margin-top:12px">Top dokters (aantal behandelingen)</h4>${top}</div>`; }
+  if(which==="active"){ const cutoff=Date.now() - (6*60*60*1000); const list=Object.entries(activeUsers).filter(([rn,info])=> (info.lastSeen||0) >= cutoff).sort((a,b)=> (b[1].lastSeen - a[1].lastSeen)); host.innerHTML = `<div class="card"><h3>Ingelogd (laatste 6 uur)</h3>${ list.length? list.map(([rn,info])=> `<div class="row-compact"><span class="${roleClass(info.role||rolesByRoep[rn]||'')}">${info.role||rolesByRoep[rn]||"(rol?)"}</span><strong>${displayName(rn)}</strong><span class="pill">Laatst gezien: ${fmtDate(info.lastSeen)}</span></div>`).join("") : `<div class="list-empty">Niemand recent ingelogd.</div>` }</div>`; }
+  if(which==="eveningRoles"){ ensureEveningToday(); const options = ALL_ROLES.map(r=> `<option>${r}</option>`).join(""); let rows=""; for(let i=1;i<=99;i++){ const rn="ZZ-"+String(i).padStart(2,"0"); const current = eveningRoles.map?.[rn] || ""; rows += `<div class="row-compact"><div style="width:90px"><strong>${rn}</strong></div><select onchange=\"setEveningRole('${rn}', this.value)\" style=\"min-width:220px\"><option value=\"\">(geen avondrol)</option>${options.replace(`>${current}<`,` selected>${current}<`)}</select><span class="pill">Perm. rol: <strong>${rolesByRoep[rn]||"(geen)"}</strong></span></div>`; } host.innerHTML = `<div class="card"><h3>Avondrollen (vandaag: ${todayKey()})</h3>${rows}<div class="actions" style="margin-top:10px"><button class="action" onclick="clearEveningRoles()">Alles leegmaken (vandaag)</button></div></div>`; }
+  if(which==="permRoles"){ const options = ALL_ROLES.map(r=> `<option>${r}</option>`).join(""); let rows=""; for(let i=1;i<=99;i++){ const rn="ZZ-"+String(i).padStart(2,"0"); const cur=rolesByRoep[rn]||""; rows += `<div class="row-compact"><div style=\"width:90px\"><strong>${rn}</strong></div><select onchange=\"setPermanentRole('${rn}', this.value)\" style=\"min-width:220px\"><option value=\"\">(geen)</option>${options.replace(`>${cur}<`,` selected>${cur}<`)}</select></div>`; } host.innerHTML = `<div class="card"><h3>Permanente rollen</h3>${rows}</div>`; }
+  if(which==="names"){ let rows=""; for(let i=1;i<=99;i++){ const rn="ZZ-"+String(i).padStart(2,"0"); const nm=namesByRoep[rn]||""; rows += `<div class="row-compact"><div style=\"width:90px\"><strong>${rn}</strong></div><input value=\"${(nm||'').replace(/"/g,'&quot;')}\" placeholder=\"Naam (permanent)\" onblur=\"setNameForRoep('${rn}', this.value)\" style=\"min-width:240px\"/></div>`; } host.innerHTML = `<div class="card"><h3>Namen beheren (per roepnummer)</h3>${rows}</div>`; }
+  if(which==="availability"){ const keys=new Set(Object.keys(activeUsers)); const list=Array.from(keys).sort().map(rn=>{ const info=activeUsers[rn]||{}; const avail=doctorAvailability[rn]||{}; const role=info.role||rolesByRoep[rn]||"(rol?)"; const name=displayName(rn); const status=avail.status||"—"; const note=avail.note||""; const last=avail.last?fmtDate(avail.last):""; return {rn,name,role,status,note,last}; }); host.innerHTML = `<div class="card"><h3>Online & beschikbaar</h3>${ list.length? list.map(x=> `<div class="row-compact"><span class="${roleClass(x.role)}">${x.role}</span><strong>${x.name}</strong><span class="pill">Status: <strong>${esc(x.status)}</strong></span>${x.note? `<span class="pill">Notitie: <strong>${esc(x.note)}</strong></span>`:""}${x.last? `<span class="pill">Laatste update: ${x.last}</span>`:""}</div>`).join("") : `<div class="list-empty">Niemand online.</div>` }</div>`; }
+  if(which==="passwords"){ let rows=""; for(let i=1;i<=99;i++){ const rn="ZZ-"+String(i).padStart(2,"0"); const val=passwordsByRoep[rn]||""; rows+=`<div class=\"row-compact\"><div style=\"width:90px\"><strong>${rn}</strong></div><input value=\"${(val||'').replace(/"/g,'&quot;')}\" placeholder=\"(leeg = algemeen)\" onblur=\"setPasswordFor('${rn}', this.value)\"/><span class=\"pill\">${rolesByRoep[rn]||'(geen rol)'}</span></div>`; } host.innerHTML = `<div class=\"card\"><h3>Wachtwoorden per roepnummer</h3>${rows}<div class=\"list-empty\" style=\"margin-top:6px\">Tip: Laat leeg om het algemene wachtwoord te gebruiken.</div></div>`; }
+}
+function setEveningRole(rn, role){ ensureEveningToday(); eveningRoles.map=eveningRoles.map||{}; if(role) eveningRoles.map[rn]=role; else delete eveningRoles.map[rn]; saveEveningLocal(); showNotify("Avondrol ingesteld", `${displayName(rn)} → ${role||"(geen)"}`, roleAccentHex(role)); }
+function clearEveningRoles(){ if(!confirm("Alle avondrollen wissen (voor vandaag)?")) return; ensureEveningToday(); eveningRoles.map={}; saveEveningLocal(); showMgmtPanel('eveningRoles'); showNotify("Avondrollen gewist", todayKey(), "#999"); }
+function setPermanentRole(rn, role){ if(role) rolesByRoep[rn]=role; else delete rolesByRoep[rn]; saveRolesLocal(); showNotify("Permanente rol", `${displayName(rn)} → ${role||"(geen)"}`, roleAccentHex(role)); }
+function setNameForRoep(rn, name){ namesByRoep[rn]=(name||"").trim(); saveNamesLocal(); if(currentUser.roepnummer===rn){ setRoleBadgeText(currentUser.role, rn); updateTopUserBadge(); } showNotify("Naam bijgewerkt", `${rn} → ${name||"—"}`, "#1e90ff"); }
+function setPasswordFor(rn, val){ val=(val||"").trim(); if(val) passwordsByRoep[rn]=val; else delete passwordsByRoep[rn]; savePasswords(); showNotify('Wachtwoord opgeslagen', rn, '#1e90ff'); }
+
+/* Export/Import helpers */
+function downloadBlob(name,text,type="application/octet-stream"){ const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+function toCSV(rows){ return rows.map(r=> r.map(v=>{ const s=(v==null?"":String(v)).replace(/"/g,'""'); return `"${s}"`; }).join(",")).join("\r\n"); }
+function exportDataJSON(){ const payload={ patiënten, recepten, wachttijden, laatsteKlik, laatsteNaam, rooms:{rooms1, rooms2}, auditLog, doctorAvailability, personRooms, behandelingenDB, applications, rolesByRoep, namesByRoep, activeUsers, eveningRoles, passwordsByRoep }; downloadBlob("ziekenhuis_data.json", JSON.stringify(payload,null,2), "application/json"); showNotify("Export gereed", "ziekenhuis_data.json", "#1e90ff"); }
+function exportCSVPatients(){ const rows=[["Naam","ID","Reden","Triage","Status","Behandeling","Dokter","Allergieën","Afspraak","Aangemaakt","WachtStart","MedischRapport","RapportLocked"]]; patiënten.forEach(p=> rows.push([p.naam,p.id,p.reden||"",triageText(p.triage),p.status,p.behandeling||"",p.dokter?displayName(p.dokter):"",(p.allergie||[]).join('; '),p.afspraakTs?fmtDate(p.afspraakTs):"",fmtDate(p.aangemaakt),p.wachtStart?fmtDate(p.wachtStart):"",p.medischRapport?"Ja":"Nee",p.rapportLocked?"Ja":"Nee"])); downloadBlob("patienten.csv", toCSV(rows), "text/csv"); showNotify("CSV geëxporteerd", "patienten.csv", "#1e90ff"); }
+function exportCSVRecepten(){ const rows=[["Naam","ID","Medicijn","Dosering","Opmerkingen","Status","Aangeschreven"]]; recepten.forEach(r=> rows.push([r.naam,r.id,r.medicijn,r.dosering||"",r.opmerkingen||"",r.status,fmtDate(r.timestamp)])); downloadBlob("recepten.csv", toCSV(rows), "text/csv"); showNotify("CSV geëxporteerd", "recepten.csv", "#1e90ff"); }
+function exportCSVRooms(){ const rows=[["Verdieping","Kamer","Bezet"]]; rooms1.forEach(r=> rows.push(["1e",r.naam,r.bezet?"Ja":"Nee"])); rooms2.forEach(r=> rows.push(["2e",r.naam,r.bezet?"Ja":"Nee"])); downloadBlob("kamers.csv", toCSV(rows), "text/csv"); showNotify("CSV geëxporteerd", "kamers.csv", "#1e90ff"); }
+function exportCSVDoctorAvailability(){ const rows=[["Roepnummer","Naam","Rol","Status","Notitie","Laatste update"]]; const keys=new Set(Object.keys(doctorAvailability)); Object.keys(activeUsers).forEach(k=>keys.add(k)); Array.from(keys).sort().forEach(rn=>{ const rec=doctorAvailability[rn]||{status:"",note:"",last:""}; const role=activeUsers[rn]?.role || rolesByRoep[rn] || ""; const nm=namesByRoep[rn]||""; rows.push([rn,nm,role,rec.status||"",rec.note||"",rec.last?fmtDate(rec.last):""]); }); downloadBlob("dokters_beschikbaarheid.csv", toCSV(rows), "text/csv"); showNotify("CSV geëxporteerd", "dokters_beschikbaarheid.csv", "#1e90ff"); }
+function exportCSVAudit(){ const rows=[["Tijdstip","Actor","Actie","Details"]]; auditLog.forEach(x=> rows.push([fmtDate(x.ts),x.actor||"",x.action||"",x.meta||""])); downloadBlob("audit_log.csv", toCSV(rows), "text/csv"); showNotify("CSV geëxporteerd", "audit_log.csv", "#1e90ff"); }
+function importDataJSON(file){ const fr=new FileReader(); fr.onload=()=>{ try{ const d=JSON.parse(fr.result); patiënten=d.patiënten||[]; recepten=d.recepten||[]; wachttijden=d.wachttijden||[]; laatsteKlik=d.laatsteKlik||null; laatsteNaam=d.laatsteNaam||"-"; auditLog=d.auditLog||[]; doctorAvailability=d.doctorAvailability||{}; personRooms=d.personRooms||{}; behandelingenDB=d.behandelingenDB||[]; applications=d.applications||[]; rolesByRoep=d.rolesByRoep||rolesByRoep; namesByRoep=d.namesByRoep||namesByRoep; activeUsers=d.activeUsers||activeUsers; eveningRoles=d.eveningRoles||eveningRoles; passwordsByRoep=d.passwordsByRoep||passwordsByRoep; if(d.rooms){ rooms1=d.rooms.rooms1||rooms1; rooms2=d.rooms.rooms2||rooms2; } saveRolesLocal(); saveNamesLocal(); saveEveningLocal(); saveActiveUsers(); savePasswords(); saveData(); updateLijst(); updateStats(); updateDokter(); toonRecepten(); renderCollected(); renderKamers(); renderManagement(); renderDoctors(); renderCoord(); renderCoordTeamStatus(); renderCoordApplications(); renderDepartments(); showNotify("Data geïmporteerd", "✔", "#2ecc71"); }catch(e){ showNotify("Import mislukt", String(e), "#cf2a2a"); } }; fr.readAsText(file); }
+function viewAudit(){ const panel=document.getElementById("auditPanel"); if(panel.style.display==="none") panel.style.display="block"; else { panel.style.display="none"; return; } const rows=auditLog.slice().reverse().map(x=> `<div style="padding:6px 0; border-bottom:1px dashed #3a4a5a"><div><strong>${fmtDate(x.ts)}</strong> — <em>${esc(x.actor||"-")}</em></div><div>${esc(x.action)}: ${esc(x.meta||"")}</div></div>`).join(""); panel.innerHTML = `<h3>Audit‑log</h3>${rows || '<div class="list-empty">Nog geen logs.</div>'}<div class="actions" style="margin-top:10px"><button class="action" onclick="downloadBlob('audit_log.txt', auditLog.map(x=> (fmtDate(x.ts)+'\t'+(x.actor||'-')+'\t'+x.action+'\t'+(x.meta||'')).join('\n')), 'text/plain')">Exporteer log (TXT)</button><button class="action danger" onclick="if(confirm('Audit‑log wissen?')){auditLog=[]; saveData(); viewAudit(); showNotify('Audit gewist','','#999');}">Log wissen</button></div>`; }
+
+/* ===========================
+   DOKTERS – TOPBAR STATUS UI
+=========================== */
+const DOCTOR_STATUS_OPTIONS=["Beschikbaar","Tijdelijk bezet","Bezet"];
+function doctorStatusPill(s){ const map={"Beschikbaar":"background:#e4ffe4; color:#155d15; border:1px solid #b2f0b2","Tijdelijk bezet":"background:#fff1b6; color:#6a5400; border:1px solid #ffdd66","Bezet":"background:#ffb3b3; color:#5a0000; border:1px solid #ff8a8a"}; const style=map[s]||"background:#f0f0f0; color:#333; border:1px solid #ddd"; return `<span class="pill" style="${style}">${s}</span>`; }
+function ensureDoctorRecord(rn){ if(!doctorAvailability[rn]) doctorAvailability[rn]={status:"Beschikbaar", note:"", last:now()}; }
+function saveDoctorAvailability(){ saveData(); renderDoctors(); }
+function saveMyDoctorAvailability(){ if(!isDoctorLike(currentUser.role)){ showNotify("Geen rechten", "Alleen (hoofd)Dokter/Arts/Chirurg.", "#cf2a2a"); return; } const rn=currentUser.roepnummer; ensureDoctorRecord(rn); const s=document.getElementById("myDocStatus").value; const n=document.getElementById("myDocNote").value.trim(); doctorAvailability[rn].status=s; doctorAvailability[rn].note=n; doctorAvailability[rn].last=now(); saveDoctorAvailability(); document.getElementById("myDocSaved").textContent="Opgeslagen om "+fmtDate(doctorAvailability[rn].last); showNotify("Beschikbaarheid", `${s}${n?` • ${n}`:""}`, roleAccentHex(currentUser.role)); }
+function updateTopStatusUI(){ const wrap=document.getElementById("topStatus"); const sel=document.getElementById("topStatusSelect"); const btn=document.getElementById("topStatusNoteBtn"); if(!wrap||!sel||!btn) return; if(currentUser.roepnummer && isDoctorLike(currentUser.role)){ wrap.style.display="inline-flex"; sel.innerHTML=DOCTOR_STATUS_OPTIONS.map(s=>`<option>${s}</option>`).join(""); ensureDoctorRecord(currentUser.roepnummer); const rec=doctorAvailability[currentUser.roepnummer]||{status:"Beschikbaar",note:"",last:now()}; sel.value=rec.status||"Beschikbaar"; sel.onchange=()=>{ ensureDoctorRecord(currentUser.roepnummer); doctorAvailability[currentUser.roepnummer].status=sel.value; doctorAvailability[currentUser.roepnummer].last=now(); saveData(); renderDoctors(); showNotify("Beschikbaarheid", sel.value, roleAccentHex(currentUser.role)); }; btn.onclick=()=>{ ensureDoctorRecord(currentUser.roepnummer); const cur=doctorAvailability[currentUser.roepnummer].note||""; const nieuw=prompt("Mijn notitie:", cur); if(nieuw!==null){ doctorAvailability[currentUser.roepnummer].note=nieuw.trim(); doctorAvailability[currentUser.roepnummer].last=now(); saveData(); renderDoctors(); showNotify("Notitie bijgewerkt", doctorAvailability[currentUser.roepnummer].note||"—", roleAccentHex(currentUser.role)); } }; }else{ wrap.style.display="none"; } }
+function renderDoctors(){ const myCard=document.getElementById("myDocCard"); if(myCard){ if(isDoctorLike(currentUser.role)){ myCard.style.display="block"; const sel=document.getElementById("myDocStatus"); sel.innerHTML=DOCTOR_STATUS_OPTIONS.map(s=>`<option>${s}</option>`).join(""); ensureDoctorRecord(currentUser.roepnummer); sel.value=doctorAvailability[currentUser.roepnummer].status||"Beschikbaar"; document.getElementById("myDocNote").value=doctorAvailability[currentUser.roepnummer].note||""; document.getElementById("myDocSaved").textContent=doctorAvailability[currentUser.roepnummer].last?("Laatst: "+fmtDate(doctorAvailability[currentUser.roepnummer].last)):""; }else{ myCard.style.display="none"; } }
+  const set=new Set(Object.keys(doctorAvailability)); patiënten.forEach(p=>{ if(p.dokter) set.add(p.dokter); }); const list=Array.from(set).map(rn=>{ const rec=doctorAvailability[rn]||{status:"Bezet",note:"",last:null}; const role=activeUsers[rn]?.role || rolesByRoep[rn] || ""; return { rn, role, name:namesByRoep[rn]||"", ...rec }; }); const order=s=>({"Beschikbaar":0,"Tijdelijk bezet":1,"Bezet":2}[s]??99); list.sort((a,b)=> (order(a.status)-order(b.status)) || a.rn.localeCompare(b.rn)); const div=document.getElementById("doctorList"); if(!div) return; div.innerHTML = list.length? list.map(d=>`
+    <div class="card">
+      <div class="row">
+        <div class="col"><span class="${roleClass(d.role)}">${d.role||"(rol?)"}</span></div>
+        <div class="col"><strong>${displayName(d.rn)}</strong></div>
+        <div class="col">${doctorStatusPill(d.status)}</div>
+        <div class="col">${d.note ? `<span class="pill">Notitie: <strong>${esc(d.note)}</strong></span>` : ''}</div>
+        <div class="col" style="color:#666; font-size:12px">${d.last ? `Laatste update: ${fmtDate(d.last)}` : ''}</div>
+      </div>
+    </div>`).join("") : `<div class="list-empty">Nog geen dokters bekend.</div>`; }
+
+/* ===========================
+   MOOIE MELDINGEN (NOTIFY) – klikbaar sluiten
+=========================== */
+function showNotify(title, sub="", accent){ let host=document.getElementById("notifyUI"); if(!host){ host=document.createElement('div'); host.id='notifyUI'; host.style.position='fixed'; host.style.inset='0'; host.style.display='none'; host.style.alignItems='center'; host.style.justifyContent='center'; host.style.background='rgba(0,0,0,.35)'; host.style.zIndex='9999'; host.addEventListener('click', (e)=>{ if(e.target.id==='notifyUI'){ host.style.display='none'; }}); document.body.appendChild(host); }
+  host.innerHTML = `<div class=\"card notify-card\" style=\"min-width:min(92vw,520px); text-align:center; border-top:10px solid ${accent||'#1e90ff'}\"><button class=\"notify-close\" onclick=\"document.getElementById('notifyUI').style.display='none'\">×</button><div style=\"font-size:26px; font-weight:800; color:#0a3d62\">${esc(title)}</div>${sub?`<div style=\"margin-top:6px; color:#333\">${esc(sub)}</div>`:""}</div>`; host.style.display='flex'; clearTimeout(showNotify._t); showNotify._t=setTimeout(()=>{ host.style.display='none'; }, 3500); }
+
+/* ===========================
+   DRUKTE-INDICATOR
+=========================== */
+function updateDrukteIndicator(){ const el=document.getElementById('drukteText'); if(!el) return; const waiting=patiënten.filter(p=>p.status==='Wachtkamer').length; const busy=patiënten.filter(p=>p.status==='Bezig').length; const pickup=patiënten.filter(p=>p.status==='Wordt opgehaald').length; const docsAvail=Object.values(doctorAvailability).filter(d=>d.status==='Beschikbaar').length || 1; const score = (waiting*2 + busy + pickup) / Math.max(1, docsAvail); let label='Rustig', color='🔵'; if(score>8) { label='Extreem druk'; color='🔴'; } else if(score>4) { label='Druk'; color='🟠'; } else if(score>2) { label='Normaal'; color='🟡'; }
+  el.textContent = label; const dr=document.getElementById('drukte'); if(dr){ dr.firstChild.nodeValue = color+' '; } }
+
+/* ===========================
+   INIT
+=========================== */
+function init(){ loadData(); renderDepartments(); updateDrukteIndicator(); if(currentUser.roepnummer){ setRoleBadgeText(currentUser.role, currentUser.roepnummer); updateTopUserBadge(); updateTopStatusUI(); document.body.classList.add('logged-in'); updateTopBarAuth(true); rawShowPage('database'); } else { updateTopBarAuth(false); goLanding(); } renderKamers(); updateStats(); renderDoctors(); autoMovePlanned(); }
+init();
+</script>
+</body>
+</html>
